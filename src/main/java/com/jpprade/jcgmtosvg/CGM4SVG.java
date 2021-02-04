@@ -26,7 +26,7 @@ public class CGM4SVG extends CGM {
 				if(c instanceof ApplicationStructureAttribute) {
 					painter.paint((ApplicationStructureAttribute)c,d);
 				}else if(c instanceof BeginApplicationStructure) {
-					
+					painter.paint((BeginApplicationStructure)c,d);
 				}else {
 					c.paint(d);
 				}

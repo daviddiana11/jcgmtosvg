@@ -10,12 +10,24 @@
 			<groupId>org.apache.xmlgraphics</groupId>
 			<artifactId>batik-svggen</artifactId>
 			<version>1.14</version>
+		</dependency><!--
+		<dependency>
+			<groupId>org.apache.xmlgraphics</groupId>
+			<artifactId>batik-dom</artifactId>
+			<version>1.14</version>
+		</dependency>-->
+		<dependency>
+    		<groupId>org.apache.xmlgraphics</groupId>
+    		<artifactId>batik-extension</artifactId>
+ 		   <version>1.14</version>
 		</dependency>
+		
+		<!--
 		<dependency>
 			<groupId>batik</groupId>
-			<artifactId>batik-dom</artifactId>
+			<artifactId>batik-ext</artifactId>
 			<version>1.6-1</version>
-		</dependency>
+		</dependency>-->
 		<dependency>
 			<groupId>jcgm</groupId>
 			<artifactId>jcgm-core</artifactId>

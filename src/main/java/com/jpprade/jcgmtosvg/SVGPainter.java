@@ -3,30 +3,46 @@ package com.jpprade.jcgmtosvg;
 import java.awt.Graphics2D;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.util.List;
 
 import org.apache.batik.svggen.SVGGraphics2D;
+import org.w3c.dom.Element;
 
 import net.sf.jcgm.core.ApplicationStructureAttribute;
+import net.sf.jcgm.core.BeginApplicationStructure;
 import net.sf.jcgm.core.CGMDisplay;
 import net.sf.jcgm.core.Member;
 import net.sf.jcgm.core.StructuredDataRecord;
 
 public class SVGPainter {
 
-	
-	
+	private boolean insideHotspotLayer = false;
+
+	private boolean hotspotDrawn = false;
+
+	private String currentHotspotName = "";
+
+
+	public void paint(BeginApplicationStructure aps,CGMDisplay d) {
+		if(insideHotspotLayer || true) {
+			if(aps.getType().equals("grobject")) {
+				currentHotspotName=aps.getIdentifier();
+			}
+		}
+	}
+
 	public void paint(ApplicationStructureAttribute aps,CGMDisplay d) {
 		SVGGraphics2D graphic = (SVGGraphics2D) d.getGraphics2D();
-		 String attributeType= aps.getAttributeType();
-		 StructuredDataRecord structuredDataRecord = aps.getStructuredDataRecord();
-		
+		String attributeType= aps.getAttributeType();
+		StructuredDataRecord structuredDataRecord = aps.getStructuredDataRecord();
+
 		if("region".equals(attributeType)) {
-			 List<Member> members = structuredDataRecord.getMembers();
-			 
+			List<Member> members = structuredDataRecord.getMembers();
+
 			if(members!=null && members.size() ==2) {
 				if(members.get(0).getCount() > 0) {
-					if(members.get(0).getData().get(0).toString().equals("4")) {
+					if(members.get(0).getData().get(0).toString().equals("4")) {//polybezier
 						List<Double> objects = (List<Double>)(Object)members.get(1).getData();
 
 						int n = (objects.size()-2)/6;
@@ -61,7 +77,9 @@ public class SVGPainter {
 						}
 
 
-						Graphics2D g2d = d.getGraphics2D();
+
+
+						SVGGraphics2D g2d =  (SVGGraphics2D) d.getGraphics2D();
 						g2d.setStroke(d.getLineStroke());
 						g2d.setColor(d.getLineColor());
 
@@ -82,7 +100,54 @@ public class SVGPainter {
 								gp.closePath();	
 							}
 						}
+
 						g2d.draw(gp);
+						hotspotDrawn =true;
+
+						//Element e = g2d.
+					}else if(members.get(0).getData().get(0).toString().equals("1")) {//rectangle
+						List<Double> objects = (List<Double>)(Object)members.get(1).getData();
+						if(objects.size()!=4) {
+							return;
+						}
+
+						double x1 = objects.get(0);
+						double y1 = objects.get(1);
+						double x2 = objects.get(2);
+						double y2 = objects.get(3);
+
+						if (x1 > x2) {
+							double temp = x1;
+							x1 = x2;
+							x2 = temp;
+						}
+
+						if (y1 > y2) {
+							double temp = y1;
+							y1 = y2;
+							y2 = temp;
+						}
+
+						double w = x2 - x1;
+						double h = y2 - y1;
+
+						Rectangle2D.Double shape = new Rectangle2D.Double(x1, y1, w, h);
+						
+						d.fill(shape);
+				    	
+				    	Graphics2D g2d = d.getGraphics2D();
+
+				    	if (d.drawEdge()) {
+				    		g2d.setColor(d.getEdgeColor());
+				    		g2d.setStroke(d.getEdgeStroke());
+				    		g2d.draw(shape);
+				    	}
+				    	hotspotDrawn =true;
+
+						
+					}else if(members.get(0).getData().get(0).toString().equals("3")) {//rectangle
+					}else {
+						System.out.println("Type HS non géré :" + members.get(0).getData().get(0).toString());
 					}
 				}
 			}
@@ -92,9 +157,23 @@ public class SVGPainter {
 				if(members.get(0).getCount() > 0) {
 					if(members.get(0).getData().get(0).toString().equalsIgnoreCase("Hotspot")) {
 						d.setLineWidth(0);
+						insideHotspotLayer=true;
 					}
 				}
 			}
 		}
 	}
+
+	public void hotspotDrawn() {
+		hotspotDrawn=false;
+	}
+
+	public boolean hasPaintedHS() {
+		return hotspotDrawn;
+	}
+
+	public String getCurrentHotspotName() {
+		return currentHotspotName;
+	}
+
 }
