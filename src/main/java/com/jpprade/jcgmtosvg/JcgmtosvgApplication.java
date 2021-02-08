@@ -3,6 +3,7 @@ package com.jpprade.jcgmtosvg;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -29,11 +30,8 @@ public class JcgmtosvgApplication {
 
 	public static void main(String[] args) {
 		
-		String file ="E:/x/JA-C0418-I9023-2019-00/illustrations/sources/ICN-JA-A-259602-M-C0418-00003-A-02-1.CGM";
+		String file ="";
 		
-		//file = "E:/x/JP-F0210-FOSJP-2019-17/illustrations/sources/ICN-JP-A-601000-M-C0418-02698-A-05-1.cgm";
-		//file = "E:/x/JP-F0210-FOSJP-2019-17/illustrations/sources/ICN-JP-A-947501-X-F9111-18038-A-01-1.cgm";
-		//file = "E:/x/JP-F0210-FOSJP-2019-17/illustrations/sources/ICN-02-A-121220-R-F0228-00190-A-04-1.cgm";
 		
 		JcgmtosvgApplication JcgmtosvgApplication = new JcgmtosvgApplication();
 		try {
@@ -73,7 +71,12 @@ public class JcgmtosvgApplication {
 	    // Finally, stream out SVG to the standard output using
 	    // UTF-8 encoding.
 	    boolean useCSS = true; // we want to use CSS style attributes
-	    Writer out = new OutputStreamWriter(System.out, "UTF-8");
+	    
+	    String fname = getFilenameWithoutExtension(new File(file));
+	    File outf = new File("c:/Users/jpprade/Documents/vrac/"+fname+".svg");
+	    FileOutputStream fos = new FileOutputStream(outf);
+	    //Writer out = new OutputStreamWriter(System.out, "UTF-8");
+	    Writer out = new OutputStreamWriter(fos, "UTF-8");
 	    //svgGenerator.stream(out, useCSS);
 	    svgGenerator.stream(root,out,useCSS,false);
 	    
@@ -104,9 +107,20 @@ public class JcgmtosvgApplication {
 	    style.setAttributeNS(null, SVGSyntax.SVG_TYPE_ATTRIBUTE, "text/css");
 	    style.appendChild(styleSheet);
 	    defs.appendChild(style);
-	    
-	    
 	    styleSheet.appendData(".hotspot { cursor: pointer;}");
+	    styleSheet.appendData("@keyframes blink {100%,0% {fill: transparent;}60% {fill: #f00;}}.hotspotBlink {animation: blink 0.25s 3;}");
+	    
+	    //-----------JS
+	    
+	    Element javascript = document.createElementNS(SVGSyntax.SVG_NAMESPACE_URI, SVGSyntax.SVG_SCRIPT_TAG);
+	    defs.appendChild(javascript);
+	    
+	    CDATASection javascriptData = document.createCDATASection("");
+	    javascript.appendChild(javascriptData);
+	    
+	    javascriptData.appendData("function clickHS(apsid){var apselement = document.getElementById(apsid);apselement.classList.add('hotspotBlink');setTimeout(function(){apselement.classList.remove('hotspotBlink');},750);}");
+	    
+	    
 	    return root;
 	}
 	
@@ -136,12 +150,19 @@ public class JcgmtosvgApplication {
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			}
+			}		
 
-		
-		
-		
+	}
+	
+	private String getFilenameWithoutExtension(File file) throws IOException {
+	    String filename = file.getCanonicalPath();
+	    String filenameWithoutExtension;
+	    if (filename.contains("."))
+	        filenameWithoutExtension = filename.substring(filename.lastIndexOf(System.getProperty("file.separator"))+1, filename.lastIndexOf('.'));
+	    else
+	        filenameWithoutExtension = filename.substring(filename.lastIndexOf(System.getProperty("file.separator"))+1);
 
+	    return filenameWithoutExtension;
 	}
 
 }

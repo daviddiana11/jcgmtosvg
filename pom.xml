@@ -22,12 +22,20 @@
  		   <version>1.14</version>
 		</dependency>
 		
+		<dependency>
+		    <groupId>org.apache.xmlgraphics</groupId>
+		    <artifactId>batik-codec</artifactId>
+		    <version>1.14</version>
+		</dependency>
+		
+		
 		<!--
 		<dependency>
 			<groupId>batik</groupId>
 			<artifactId>batik-ext</artifactId>
 			<version>1.6-1</version>
 		</dependency>-->
+		<!-- 
 		<dependency>
 			<groupId>jcgm</groupId>
 			<artifactId>jcgm-core</artifactId>
@@ -35,7 +43,7 @@
 			<scope>system</scope>
 			<systemPath>${basedir}/../jcgm-core/build/jcgm-core-0.3.1.jar</systemPath>
 		</dependency>
-
+ -->
 	</dependencies>
 	<build>
 		<sourceDirectory>src</sourceDirectory>

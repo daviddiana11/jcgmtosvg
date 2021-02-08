@@ -33,6 +33,9 @@ public class MyStyleHandler extends DefaultStyleHandler {
 			lastElement.setAttributeNS(null, "fill-rule", "evenodd");
 			lastElement.setAttributeNS(null, "fill", "transparent");
 			lastElement.setAttributeNS(null, "class", "hotspot");
+			lastElement.setAttributeNS(null, "onclick", "clickHS('"+apsName+"')");
+			lastElement.setAttributeNS(null, "stroke-width", "0");
+			
 			svgPainter.hotspotDrawn();
 		}
 		lastElement=element;

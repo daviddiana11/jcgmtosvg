@@ -2,6 +2,7 @@ package com.jpprade.jcgmtosvg;
 
 import java.awt.Graphics2D;
 import java.awt.geom.GeneralPath;
+import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.List;
@@ -145,7 +146,28 @@ public class SVGPainter {
 				    	hotspotDrawn =true;
 
 						
-					}else if(members.get(0).getData().get(0).toString().equals("3")) {//rectangle
+					}else if(members.get(0).getData().get(0).toString().equals("3")) {//polygon
+						List<Double> objects = (List<Double>)(Object)members.get(1).getData();
+						Path2D.Double polygon = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+						Graphics2D g2d = d.getGraphics2D();
+						
+						for(int i=0;i<objects.size();i=i+2) {
+							if(i==0) {
+								polygon.moveTo(objects.get(i), objects.get(i+1));
+							}else {
+								polygon.lineTo(objects.get(i), objects.get(i+1));
+							}
+						}
+						polygon.closePath();
+						
+						d.fill(polygon);
+						if (d.drawEdge()) {
+				    		g2d.setColor(d.getEdgeColor());
+				    		g2d.setStroke(d.getEdgeStroke());
+				    		g2d.draw(polygon);
+				    	}
+						hotspotDrawn =true;
+						
 					}else {
 						System.out.println("Type HS non géré :" + members.get(0).getData().get(0).toString());
 					}
