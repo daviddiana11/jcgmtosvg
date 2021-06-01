@@ -7,6 +7,7 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.List;
 
+import org.apache.batik.svggen.DOMTreeManager;
 import org.apache.batik.svggen.SVGGraphics2D;
 import org.w3c.dom.Element;
 
@@ -26,9 +27,13 @@ public class SVGPainter {
 
 
 	public void paint(BeginApplicationStructure aps,CGMDisplay d) {
-		if(insideHotspotLayer || true) {
+		if(insideHotspotLayer) {
 			if(aps.getType().equals("grobject")) {
 				currentHotspotName=aps.getIdentifier();
+				SVGGraphics2D graphic = (SVGGraphics2D) d.getGraphics2D();
+				DOMTreeManager tm = graphic.getDOMTreeManager();
+				//tm.appendGroup(group, groupManager);
+				//graphic.d
 			}
 		}
 	}
@@ -174,15 +179,17 @@ public class SVGPainter {
 				}
 			}
 		}else if("name".equals(attributeType)) {
-			List<Member> members = structuredDataRecord.getMembers();
+			/*List<Member> members = structuredDataRecord.getMembers();
 			if(members!=null && members.size() ==1) {
 				if(members.get(0).getCount() > 0) {
-					if(members.get(0).getData().get(0).toString().equalsIgnoreCase("Hotspot")) {
+					if(members.get(0).getData().get(0).toString().equalsIgnoreCase("Hotspot")
+							|| members.get(0).getData().get(0).toString().equalsIgnoreCase("Hotspots")) {
 						d.setLineWidth(0);
 						insideHotspotLayer=true;
 					}
 				}
-			}
+			}*/
+			insideHotspotLayer=true;
 		}
 	}
 
