@@ -11,6 +11,8 @@ import org.apache.batik.svggen.DOMTreeManager;
 import org.apache.batik.svggen.SVGGraphics2D;
 import org.w3c.dom.Element;
 
+import com.jpprade.jcgmtosvg.extension.SVGGraphics2DHS;
+
 import net.sf.jcgm.core.ApplicationStructureAttribute;
 import net.sf.jcgm.core.BeginApplicationStructure;
 import net.sf.jcgm.core.CGMDisplay;
@@ -19,23 +21,22 @@ import net.sf.jcgm.core.StructuredDataRecord;
 
 public class SVGPainter {
 
-	private boolean insideHotspotLayer = false;
-
 	private boolean hotspotDrawn = false;
 
-	private String currentHotspotName = "";
+	private String currentApsId = "";
+	private String currentApsName = "";
 
 
 	public void paint(BeginApplicationStructure aps,CGMDisplay d) {
-		if(insideHotspotLayer) {
+		//if(insideHotspotLayer) {
 			if(aps.getType().equals("grobject")) {
-				currentHotspotName=aps.getIdentifier();
+				currentApsId=aps.getIdentifier();
 				SVGGraphics2D graphic = (SVGGraphics2D) d.getGraphics2D();
 				DOMTreeManager tm = graphic.getDOMTreeManager();
 				//tm.appendGroup(group, groupManager);
 				//graphic.d
 			}
-		}
+		//}
 	}
 
 	public void paint(ApplicationStructureAttribute aps,CGMDisplay d) {
@@ -85,7 +86,7 @@ public class SVGPainter {
 
 
 
-						SVGGraphics2D g2d =  (SVGGraphics2D) d.getGraphics2D();
+						SVGGraphics2DHS g2d =  (SVGGraphics2DHS) d.getGraphics2D();
 						g2d.setStroke(d.getLineStroke());
 						g2d.setColor(d.getLineColor());
 
@@ -107,7 +108,7 @@ public class SVGPainter {
 							}
 						}
 
-						g2d.draw(gp);
+						g2d.drawHotSpot(gp,this.currentApsId,this.currentApsName);
 						hotspotDrawn =true;
 
 						//Element e = g2d.
@@ -139,22 +140,22 @@ public class SVGPainter {
 
 						Rectangle2D.Double shape = new Rectangle2D.Double(x1, y1, w, h);
 						
-						d.fill(shape);
+						//d.fill(shape);
 				    	
-				    	Graphics2D g2d = d.getGraphics2D();
+						SVGGraphics2DHS g2d =  (SVGGraphics2DHS) d.getGraphics2D();
 
-				    	if (d.drawEdge()) {
+				    	//if (d.drawEdge()) {
 				    		g2d.setColor(d.getEdgeColor());
 				    		g2d.setStroke(d.getEdgeStroke());
-				    		g2d.draw(shape);
-				    	}
+				    		g2d.drawHotSpot(shape,this.currentApsId,this.currentApsName);
+				    	//}
 				    	hotspotDrawn =true;
 
 						
 					}else if(members.get(0).getData().get(0).toString().equals("3")) {//polygon
 						List<Double> objects = (List<Double>)(Object)members.get(1).getData();
 						Path2D.Double polygon = new Path2D.Double(Path2D.WIND_EVEN_ODD);
-						Graphics2D g2d = d.getGraphics2D();
+						SVGGraphics2DHS g2d =  (SVGGraphics2DHS) d.getGraphics2D();
 						
 						for(int i=0;i<objects.size();i=i+2) {
 							if(i==0) {
@@ -165,12 +166,12 @@ public class SVGPainter {
 						}
 						polygon.closePath();
 						
-						d.fill(polygon);
-						if (d.drawEdge()) {
+						//d.fill(polygon);
+						//if (d.drawEdge()) {
 				    		g2d.setColor(d.getEdgeColor());
 				    		g2d.setStroke(d.getEdgeStroke());
-				    		g2d.draw(polygon);
-				    	}
+				    		g2d.drawHotSpot(polygon,this.currentApsId,this.currentApsName);
+				    	//}
 						hotspotDrawn =true;
 						
 					}else {
@@ -179,17 +180,17 @@ public class SVGPainter {
 				}
 			}
 		}else if("name".equals(attributeType)) {
-			/*List<Member> members = structuredDataRecord.getMembers();
+			List<Member> members = structuredDataRecord.getMembers();
 			if(members!=null && members.size() ==1) {
 				if(members.get(0).getCount() > 0) {
-					if(members.get(0).getData().get(0).toString().equalsIgnoreCase("Hotspot")
-							|| members.get(0).getData().get(0).toString().equalsIgnoreCase("Hotspots")) {
-						d.setLineWidth(0);
-						insideHotspotLayer=true;
+					if(members.get(0).getData() != null 
+							&& members.get(0).getData().size() > 0
+							&& members.get(0).getData().get(0) instanceof String) {
+						this.currentApsName = (String) members.get(0).getData().get(0);
 					}
 				}
-			}*/
-			insideHotspotLayer=true;
+			}
+			
 		}
 	}
 
@@ -201,8 +202,14 @@ public class SVGPainter {
 		return hotspotDrawn;
 	}
 
-	public String getCurrentHotspotName() {
-		return currentHotspotName;
+	public String getCurrentApsId() {
+		return currentApsId;
 	}
+
+	public String getCurrentApsName() {
+		return currentApsName;
+	}
+
+	
 
 }

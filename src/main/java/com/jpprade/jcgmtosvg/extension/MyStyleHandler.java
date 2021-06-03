@@ -28,12 +28,15 @@ public class MyStyleHandler extends DefaultStyleHandler {
 		
 		
 		if(svgPainter.hasPaintedHS()) {
-			String apsName = getSvgPainter().getCurrentHotspotName();
-			lastElement.setAttributeNS(null, "id", apsName);
+			String apsId = getSvgPainter().getCurrentApsId();
+			String apsName = getSvgPainter().getCurrentApsName();
+			lastElement.setAttributeNS(null, "id", apsId);
+			lastElement.setAttributeNS(null, "apsname", apsName);
+			lastElement.setAttributeNS(null, "apsid", apsId);
 			lastElement.setAttributeNS(null, "fill-rule", "evenodd");
 			lastElement.setAttributeNS(null, "fill", "transparent");
 			lastElement.setAttributeNS(null, "class", "hotspot");
-			lastElement.setAttributeNS(null, "onclick", "clickHS('"+apsName+"')");
+			lastElement.setAttributeNS(null, "onclick", "clickHS('"+apsId+"')");
 			lastElement.setAttributeNS(null, "stroke-width", "0");
 			
 			svgPainter.hotspotDrawn();
