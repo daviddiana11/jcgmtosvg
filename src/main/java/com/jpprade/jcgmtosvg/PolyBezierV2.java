@@ -11,9 +11,12 @@ import java.lang.reflect.Field;
 import net.sf.jcgm.core.BeginApplicationStructure;
 import net.sf.jcgm.core.BeginFigure;
 import net.sf.jcgm.core.CGMDisplay;
+import net.sf.jcgm.core.Command;
 import net.sf.jcgm.core.EdgeColour;
 import net.sf.jcgm.core.EdgeWidth;
 import net.sf.jcgm.core.FillColour;
+import net.sf.jcgm.core.LineColour;
+import net.sf.jcgm.core.LineWidth;
 import net.sf.jcgm.core.PolyBezier;
 
 public class PolyBezierV2 {
@@ -96,7 +99,7 @@ public class PolyBezierV2 {
 	}
 
 	
-	public void paint(CGMDisplay d,BeginFigure figure, FillColour currentFC, EdgeColour currentEC, EdgeWidth currentEW) {
+	public void paint(CGMDisplay d,BeginFigure figure, FillColour currentFC, EdgeColour currentEC, EdgeWidth currentEW, LineColour currentLC, LineWidth currentLW) {
 
 
 		int mode = figure == null?0:1;
@@ -107,6 +110,7 @@ public class PolyBezierV2 {
 			Graphics2D g2d = d.getGraphics2D();
 			g2d.setStroke(d.getLineStroke());
 			g2d.setColor(d.getLineColor());
+			//g2d.setStroke(d.getEdgeStroke());
 
 			//d.fill(this.curves);
 
@@ -120,8 +124,20 @@ public class PolyBezierV2 {
 
 
 			Graphics2D g2d = d.getGraphics2D();
-			g2d.setStroke(d.getLineStroke());
-			g2d.setColor(d.getLineColor());
+			if(currentLC!=null || currentLW!=null) {
+			//if(lastCommand instanceof LineColour || lastCommand instanceof LineWidth) {
+				g2d.setStroke(d.getLineStroke());			
+				g2d.setColor(d.getLineColor());
+			}else if(currentEC!=null || currentEW!=null) {
+			//}else if(lastCommand instanceof EdgeColour || lastCommand instanceof EdgeWidth) {
+				g2d.setStroke(d.getEdgeStroke());
+				g2d.setColor(d.getEdgeColor());
+			}else {
+				g2d.setStroke(d.getLineStroke());			
+				g2d.setColor(d.getLineColor());
+			}
+			
+			
 
 			GeneralPath gp = new GeneralPath();
 
@@ -136,12 +152,25 @@ public class PolyBezierV2 {
 					gp.closePath();	
 				}
 			}
-			//if (currentFC!=null) {
+			
+			if (currentFC!=null) {			
 				Color fColor = d.getFillColor();
 				g2d.setPaint(fColor);
+				
+			}
+			//
+			if(currentFC!=null) {
 				g2d.fill(gp);
-			//}
-			g2d.draw(gp);
+			}else {
+				g2d.draw(gp);
+				//g2d.fill(gp);
+			}
+			
+			/*
+				
+			}else {
+				
+			}*/
 		}
 
 	}
