@@ -8,6 +8,8 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Point2D.Double;
 import java.lang.reflect.Field;
 
+import com.jpprade.jcgmtosvg.extension.SVGGraphics2DHS;
+
 import net.sf.jcgm.core.BeginApplicationStructure;
 import net.sf.jcgm.core.BeginFigure;
 import net.sf.jcgm.core.CGMDisplay;
@@ -98,8 +100,11 @@ public class PolyBezierV2 {
 		}
 	}
 
+	public void paint(CGMDisplay d,BeginFigure figure) {
+		this.paint(d, figure, null, null, null, null, null, null, null);
+	}
 	
-	public void paint(CGMDisplay d,BeginFigure figure, FillColour currentFC, EdgeColour currentEC, EdgeWidth currentEW, LineColour currentLC, LineWidth currentLW) {
+	public void paint(CGMDisplay d,BeginFigure figure, FillColour currentFC, EdgeColour currentEC, EdgeWidth currentEW, LineColour currentLC, LineWidth currentLW, String apsname, String apsid) {
 
 
 		int mode = figure == null?0:1;
@@ -107,7 +112,8 @@ public class PolyBezierV2 {
 			if (this.curves == null)
 				initCurves();
 
-			Graphics2D g2d = d.getGraphics2D();
+			//Graphics2D g2d = d.getGraphics2D();
+			SVGGraphics2DHS g2d =  (SVGGraphics2DHS) d.getGraphics2D();
 			g2d.setStroke(d.getLineStroke());
 			g2d.setColor(d.getLineColor());
 			//g2d.setStroke(d.getEdgeStroke());
@@ -115,15 +121,22 @@ public class PolyBezierV2 {
 			//d.fill(this.curves);
 
 			for (int i = 0; i < this.curves.length; i++) {
-				//d.fill(this.curves[i]);
-				g2d.draw(this.curves[i]);
+				
+				
+				if(apsname!=null && apsid!=null) {					
+					g2d.drawTDET(this.curves[i],apsid,apsname);
+				}else {
+					g2d.draw(this.curves[i]);
+				}
 
+				
 			}
 		}else {
 
 
 
-			Graphics2D g2d = d.getGraphics2D();
+			//Graphics2D g2d = d.getGraphics2D();
+			SVGGraphics2DHS g2d =  (SVGGraphics2DHS) d.getGraphics2D();
 			if(currentLC!=null || currentLW!=null) {
 			//if(lastCommand instanceof LineColour || lastCommand instanceof LineWidth) {
 				g2d.setStroke(d.getLineStroke());			
@@ -160,9 +173,19 @@ public class PolyBezierV2 {
 			}
 			//
 			if(currentFC!=null) {
-				g2d.fill(gp);
+				if(apsname!=null && apsid!=null) {
+					g2d.fillTDET(gp,apsid,apsname);
+				}else {
+					g2d.fill(gp);
+				}
 			}else {
-				g2d.draw(gp);
+				if(apsname!=null && apsid!=null) {
+					
+					g2d.drawTDET(gp,apsid,apsname);
+				}else {
+					g2d.draw(gp);
+				}
+				
 				//g2d.fill(gp);
 			}
 			

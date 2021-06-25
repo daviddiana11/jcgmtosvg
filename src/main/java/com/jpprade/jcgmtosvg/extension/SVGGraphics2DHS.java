@@ -35,6 +35,32 @@ public class SVGGraphics2DHS extends SVGGraphics2D {
 			fill(strokedShape);
 		}
 	}
+	
+	public void fillTDET(Shape s,String apsId,String apsName) {
+        Element svgShape = shapeConverter.toSVG(s);
+        if (svgShape != null) {
+        	enrichTDET(svgShape,apsId,apsName);
+            domGroupManager.addElement(svgShape, DOMGroupManager.FILL);
+        }
+    }
+	
+	
+	public void drawTDET(Shape s,String apsId,String apsName) {
+		// Only BasicStroke can be converted to an SVG attribute equivalent.
+		// If the GraphicContext's Stroke is not an instance of BasicStroke,
+		// then the stroked outline is filled.
+		Stroke stroke = gc.getStroke();
+		if (stroke instanceof BasicStroke) {
+			Element svgShape = shapeConverter.toSVG(s);
+			if (svgShape != null) {
+				enrichTDET(svgShape,apsId,apsName);
+				domGroupManager.addElement(svgShape, DOMGroupManager.DRAW);
+			}
+		} else {
+			Shape strokedShape = stroke.createStrokedShape(s);
+			fill(strokedShape);
+		}
+	}
 
 	
 	private void enrichHS(Element svgShape, String apsId,String apsName) {
@@ -46,5 +72,11 @@ public class SVGGraphics2DHS extends SVGGraphics2D {
 		svgShape.setAttributeNS(null, "class", "hotspot");
 		svgShape.setAttributeNS(null, "onclick", "clickHS('"+apsId+"')");
 		svgShape.setAttributeNS(null, "stroke-width", "0");
+	}
+	
+	private void enrichTDET(Element svgShape, String apsId,String apsName) {
+		svgShape.setAttributeNS(null, "apsname", apsName);
+		svgShape.setAttributeNS(null, "apsid", apsId);
+		svgShape.setAttributeNS(null, "class", "tdet");
 	}
 }

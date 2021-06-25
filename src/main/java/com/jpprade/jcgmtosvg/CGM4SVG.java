@@ -58,6 +58,10 @@ public class CGM4SVG extends CGM {
 		for (Command c : getCommands()) {
 				if(c instanceof ApplicationStructureAttribute) {
 					painter.paint((ApplicationStructureAttribute)c,d);
+					BeginApplicationStructure top = basStack.peek();
+					if(top!=null) {
+						mapping.get(top).addAPS((ApplicationStructureAttribute)c);
+					}
 				}else if(c instanceof BeginApplicationStructure) {
 					painter.paint((BeginApplicationStructure)c,d);
 					this.currentAPS = (BeginApplicationStructure)c;
@@ -91,63 +95,69 @@ public class CGM4SVG extends CGM {
 				}else {
 					if(c instanceof PolyBezier) {
 						PolyBezierV2 c2 = new PolyBezierV2((PolyBezier)c);
-						BeginApplicationStructure top = basStack.peek();
+						String apsname = null;
+						String apsid = null;
+						if(!basStack.isEmpty()) {
+							
+							BeginApplicationStructure top = basStack.peek();						
+							apsname = mapping.get(top).getName();
+							
+							if(apsname!=null && apsname.startsWith("TDET")) {
+								apsid = top.getIdentifier();
+							}else {
+								apsname = null;
+							}
+							c2.paint(d,currentFigure,
+									mapping.get(top).getCurrentFC(),
+									mapping.get(top).getCurrentEC(),
+									mapping.get(top).getCurrentEW(),
+									mapping.get(top).getCurrentLC(),
+									mapping.get(top).getCurrentLW(),apsname,apsid);
+						}else {
+							c2.paint(d,currentFigure);
+						}
 						
-						c2.paint(d,currentFigure,
-								mapping.get(top).getCurrentFC(),
-								mapping.get(top).getCurrentEC(),
-								mapping.get(top).getCurrentEW(),
-								mapping.get(top).getCurrentLC(),
-								mapping.get(top).getCurrentLW());
+						
+						
 					}else if(c instanceof FillColour) {
-						BeginApplicationStructure top = basStack.peek();
-						if(top!=null) {
+						if(!basStack.isEmpty()) {
+							BeginApplicationStructure top = basStack.peek();						
 							mapping.get(top).setCurrentFC((FillColour)c);
 						}
-						//if(currentAPS!=null) {
-							this.currentFC = (FillColour) c;
-							this.lastCommand=c;
-						//}
+						this.currentFC = (FillColour) c;
+						this.lastCommand=c;
 						c.paint(d);
 					}else if(c instanceof EdgeColour) {
-						BeginApplicationStructure top = basStack.peek();
-						if(top!=null) {
+						if(!basStack.isEmpty()) {
+							BeginApplicationStructure top = basStack.peek();						
 							mapping.get(top).setCurrentEC((EdgeColour)c);
 						}
-						//if(currentAPS!=null) {
-							this.currentEC = (EdgeColour) c;
-							this.lastCommand=c;
-						//}
+						this.currentEC = (EdgeColour) c;
+						this.lastCommand=c;
 						c.paint(d);
 					}else if(c instanceof EdgeWidth) {
-						BeginApplicationStructure top = basStack.peek();
-						if(top!=null) {
+						if(!basStack.isEmpty()) {
+							BeginApplicationStructure top = basStack.peek();						
 							mapping.get(top).setCurrentEW((EdgeWidth)c);
 						}
-						//if(currentAPS!=null) {
-							this.currentEW = (EdgeWidth) c;
-							this.lastCommand=c;
-						//}
+						this.currentEW = (EdgeWidth) c;
+						this.lastCommand=c;
 						c.paint(d);
 					}else if(c instanceof LineColour) {
-						BeginApplicationStructure top = basStack.peek();
-						if(top!=null) {
+						if(!basStack.isEmpty()) {
+							BeginApplicationStructure top = basStack.peek();						
 							mapping.get(top).setCurrentLC((LineColour)c);
 						}
-						//if(currentAPS!=null) {
-							this.currentLC = (LineColour) c;
-							this.lastCommand=c;
-						//}
+						this.currentLC = (LineColour) c;
+						this.lastCommand=c;
 						c.paint(d);
 					}else if(c instanceof LineWidth) {
-						BeginApplicationStructure top = basStack.peek();
-						if(top!=null) {
+						if(!basStack.isEmpty()) {
+							BeginApplicationStructure top = basStack.peek();
 							mapping.get(top).setCurrentLW((LineWidth)c);
 						}
-						//if(currentAPS!=null) {
-							this.currentLW = (LineWidth) c;
-							this.lastCommand=c;
-						//}
+						this.currentLW = (LineWidth) c;
+						this.lastCommand=c;
 						c.paint(d);
 					}else {
 						c.paint(d);
