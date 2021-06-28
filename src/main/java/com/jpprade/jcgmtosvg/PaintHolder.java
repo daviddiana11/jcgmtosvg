@@ -24,6 +24,8 @@ public class PaintHolder {
 	private LineColour currentLC = null;
 
 	private LineWidth currentLW = null;
+	
+	private String apsid = "";
 
 	private List<ApplicationStructureAttribute> curentAPS = new ArrayList<>();
 
@@ -71,6 +73,19 @@ public class PaintHolder {
 	public void addAPS(ApplicationStructureAttribute aps) {
 		this.curentAPS.add(aps);
 	}
+	
+	public ApplicationStructureAttribute getRegionAPS() {
+		if(curentAPS!=null) {
+			for(ApplicationStructureAttribute aps : curentAPS) {
+				String attributeType= aps.getAttributeType();
+				StructuredDataRecord structuredDataRecord = aps.getStructuredDataRecord();
+				if("region".equals(attributeType)) {
+					return aps;
+				}
+			}
+		}
+		return null;
+	}
 
 	public String getName() {
 		if(curentAPS!=null) {
@@ -92,6 +107,14 @@ public class PaintHolder {
 			}
 		}
 		return "";
+	}
+
+	public String getApsid() {
+		return apsid;
+	}
+
+	public void setApsid(String apsid) {
+		this.apsid = apsid;
 	}
 
 

@@ -57,17 +57,23 @@ public class CGM4SVG extends CGM {
 	public void paint(CGMDisplay d) {		
 		for (Command c : getCommands()) {
 				if(c instanceof ApplicationStructureAttribute) {
-					painter.paint((ApplicationStructureAttribute)c,d);
+					
 					BeginApplicationStructure top = basStack.peek();
-					if(top!=null) {
-						mapping.get(top).addAPS((ApplicationStructureAttribute)c);
+					
+					mapping.get(top).addAPS((ApplicationStructureAttribute)c);
+					
+					ApplicationStructureAttribute regionaps = mapping.get(top).getRegionAPS();
+					if(regionaps!=null) {					
+						painter.paint(regionaps,d,mapping.get(top));
 					}
-				}else if(c instanceof BeginApplicationStructure) {
-					painter.paint((BeginApplicationStructure)c,d);
+				}else if(c instanceof BeginApplicationStructure) {// structure parente					
 					this.currentAPS = (BeginApplicationStructure)c;
 					basStack.add(currentAPS);
 					PaintHolder ph = new PaintHolder();
+					ph.setApsid(this.currentAPS.getIdentifier());
 					mapping.put(currentAPS, ph);
+					
+					painter.paint((BeginApplicationStructure)c,d,ph);
 				}else if(c instanceof BeginFigure) {
 					c.paint(d);
 					this.currentFigure = (BeginFigure)c;				
@@ -112,7 +118,7 @@ public class CGM4SVG extends CGM {
 									mapping.get(top).getCurrentEC(),
 									mapping.get(top).getCurrentEW(),
 									mapping.get(top).getCurrentLC(),
-									mapping.get(top).getCurrentLW(),apsname,apsid);
+									mapping.get(top).getCurrentLW(),null,null);
 						}else {
 							c2.paint(d,currentFigure);
 						}

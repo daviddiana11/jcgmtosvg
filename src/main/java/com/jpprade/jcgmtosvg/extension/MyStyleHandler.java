@@ -26,7 +26,7 @@ public class MyStyleHandler extends DefaultStyleHandler {
 
 	public void setStyle(Element element, Map styleMap, SVGGeneratorContext generatorContext) {
 		
-		
+		/*
 		if(svgPainter.hasPaintedHS()) {
 			String apsId = getSvgPainter().getCurrentApsId();
 			String apsName = getSvgPainter().getCurrentApsName();
@@ -42,7 +42,7 @@ public class MyStyleHandler extends DefaultStyleHandler {
 			svgPainter.hotspotDrawn();
 		}
 		lastElement=element;
-		
+		*/
 		super.setStyle(element, styleMap, generatorContext);
 		/*Iterator iter = styleMap.keySet().iterator();
 

@@ -23,23 +23,23 @@ public class SVGPainter {
 
 	private boolean hotspotDrawn = false;
 
-	private String currentApsId = "";
-	private String currentApsName = "";
+	/*private String currentApsId = "";
+	private String currentApsName = "";*/
 
 
-	public void paint(BeginApplicationStructure aps,CGMDisplay d) {
-		//if(insideHotspotLayer) {
-			if(aps.getType().equals("grobject")) {
+	public void paint(BeginApplicationStructure c,CGMDisplay d, PaintHolder ph) {
+		
+			/*if(aps.getType().equals("grobject")) {
 				currentApsId=aps.getIdentifier();
 				SVGGraphics2D graphic = (SVGGraphics2D) d.getGraphics2D();
 				DOMTreeManager tm = graphic.getDOMTreeManager();
 				//tm.appendGroup(group, groupManager);
 				//graphic.d
-			}
-		//}
+			}*/
+		
 	}
 
-	public void paint(ApplicationStructureAttribute aps,CGMDisplay d) {
+	public void paint(ApplicationStructureAttribute aps,CGMDisplay d, PaintHolder ph) {
 		SVGGraphics2D graphic = (SVGGraphics2D) d.getGraphics2D();
 		String attributeType= aps.getAttributeType();
 		StructuredDataRecord structuredDataRecord = aps.getStructuredDataRecord();
@@ -108,7 +108,7 @@ public class SVGPainter {
 							}
 						}
 
-						g2d.drawHotSpot(gp,this.currentApsId,this.currentApsName);
+						g2d.drawHotSpot(gp,ph.getApsid(),ph.getName());
 						hotspotDrawn =true;
 
 						//Element e = g2d.
@@ -147,7 +147,7 @@ public class SVGPainter {
 				    	//if (d.drawEdge()) {
 				    		g2d.setColor(d.getEdgeColor());
 				    		g2d.setStroke(d.getEdgeStroke());
-				    		g2d.drawHotSpot(shape,this.currentApsId,this.currentApsName);
+				    		g2d.drawHotSpot(shape,ph.getApsid(),ph.getName());
 				    	//}
 				    	hotspotDrawn =true;
 
@@ -170,7 +170,7 @@ public class SVGPainter {
 						//if (d.drawEdge()) {
 				    		g2d.setColor(d.getEdgeColor());
 				    		g2d.setStroke(d.getEdgeStroke());
-				    		g2d.drawHotSpot(polygon,this.currentApsId,this.currentApsName);
+				    		g2d.drawHotSpot(polygon,ph.getApsid(),ph.getName());
 				    	//}
 						hotspotDrawn =true;
 						
@@ -180,7 +180,7 @@ public class SVGPainter {
 				}
 			}
 		}else if("name".equals(attributeType)) {
-			List<Member> members = structuredDataRecord.getMembers();
+			/*List<Member> members = structuredDataRecord.getMembers();
 			if(members!=null && members.size() ==1) {
 				if(members.get(0).getCount() > 0) {
 					if(members.get(0).getData() != null 
@@ -189,7 +189,7 @@ public class SVGPainter {
 						this.currentApsName = (String) members.get(0).getData().get(0);
 					}
 				}
-			}
+			}*/
 			
 		}
 	}
@@ -202,13 +202,13 @@ public class SVGPainter {
 		return hotspotDrawn;
 	}
 
-	public String getCurrentApsId() {
+	/*public String getCurrentApsId() {
 		return currentApsId;
 	}
 
 	public String getCurrentApsName() {
 		return currentApsName;
-	}
+	}*/
 
 	
 
