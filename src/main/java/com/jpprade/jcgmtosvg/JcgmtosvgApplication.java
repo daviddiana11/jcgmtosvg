@@ -367,7 +367,7 @@ public class JcgmtosvgApplication {
 
 		try {
 			cgm = new CGM4SVG(cgmFile,svgPainter);
-			final CGMDisplay display = new CGMDisplay(cgm);
+			final CGMDisplay display = new CGMDisplay4SVG(cgm);
 			//cgm.paint(cgmDisplay);
 			Dimension size = cgm.getSize();				
 			int width = size.width;

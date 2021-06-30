@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Stack;
 
+import com.jpprade.jcgmtosvg.commands.PolyBezierV2;
+
 import net.sf.jcgm.core.ApplicationStructureAttribute;
 import net.sf.jcgm.core.BeginApplicationStructure;
 import net.sf.jcgm.core.BeginFigure;
