@@ -118,7 +118,7 @@ public class CGM4SVG extends CGM {
 									mapping.get(top).getCurrentEC(),
 									mapping.get(top).getCurrentEW(),
 									mapping.get(top).getCurrentLC(),
-									mapping.get(top).getCurrentLW(),null,null);
+									mapping.get(top).getCurrentLW());
 						}else {
 							c2.paint(d,currentFigure);
 						}
