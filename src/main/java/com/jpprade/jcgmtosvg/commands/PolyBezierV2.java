@@ -12,6 +12,7 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.Point2D.Double;
 import java.lang.reflect.Field;
+import java.text.DecimalFormat;
 
 import com.jpprade.jcgmtosvg.extension.SVGGraphics2DHS;
 
@@ -150,6 +151,11 @@ public class PolyBezierV2 extends ExtendedCommand{
 				g2d.setColor(d.getLineColor());
 			}
 			
+			DecimalFormat df = new DecimalFormat("#.###");
+			String fm = df.format(this.p1[0].x);
+			/*if("82,329".equals(fm) || "57,975".equals(fm)) {
+				System.out.println(this.p1[0].x);
+			}*/
 			
 
 			GeneralPath gp = new GeneralPath();
@@ -166,26 +172,46 @@ public class PolyBezierV2 extends ExtendedCommand{
 				}
 			}
 			
-			if (currentFC!=null) {			
+			/*if (currentFC!=null) {			
 				Color fColor = d.getFillColor();
 				g2d.setPaint(fColor);
 				
-			}
-			//
+			}*/
+			//M82.3294 112.488 C82.3294 112.488
+			Style s = d.getInteriorStyle();
 			if(currentFC!=null) {
 				
-				Style s = d.getInteriorStyle();
+				
 				if(InteriorStyle.Style.HATCH.equals(s)) {
 					//drawHatch(gp,g2d,currentFC.,null);
 					//currentFC.
 					drawHatch(gp,g2d,d.getFillColor(), d.getHatchType());
 					g2d.draw(gp);
+				}else if(InteriorStyle.Style.EMPTY.equals(s)) {
+					g2d.draw(gp);
 				}else {
+					Color fColor = d.getFillColor();
+					g2d.setPaint(fColor);
 					g2d.fill(gp);
+					if (d.drawEdge()) {
+			    		g2d.setColor(d.getEdgeColor());
+			    		g2d.setStroke(d.getEdgeStroke());
+			    		g2d.draw(gp);
+			    	}
 				}
 				
-			}else {				
-				g2d.draw(gp);	
+			}else {
+				if(InteriorStyle.Style.SOLID.equals(s)) {
+					Color fColor = d.getFillColor();
+					g2d.setPaint(fColor);					
+					g2d.fill(gp);
+					g2d.setStroke(d.getLineStroke());
+					g2d.setColor(d.getLineColor());
+					g2d.draw(gp);
+					
+				}else {
+					g2d.draw(gp);
+				}
 			}
 			
 			
