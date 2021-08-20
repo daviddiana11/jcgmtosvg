@@ -1,5 +1,6 @@
 package com.jpprade.jcgmtosvg;
 
+import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Path2D;
@@ -20,8 +21,6 @@ import net.sf.jcgm.core.Member;
 import net.sf.jcgm.core.StructuredDataRecord;
 
 public class SVGPainter {
-
-	private boolean hotspotDrawn = false;
 
 	/*private String currentApsId = "";
 	private String currentApsName = "";*/
@@ -109,7 +108,7 @@ public class SVGPainter {
 						}
 
 						g2d.drawHotSpot(gp,ph.getApsid(),ph.getName());
-						hotspotDrawn =true;
+						
 
 						//Element e = g2d.
 					}else if(members.get(0).getData().get(0).toString().equals("1")) {//rectangle
@@ -149,7 +148,6 @@ public class SVGPainter {
 				    		g2d.setStroke(d.getEdgeStroke());
 				    		g2d.drawHotSpot(shape,ph.getApsid(),ph.getName());
 				    	//}
-				    	hotspotDrawn =true;
 
 						
 					}else if(members.get(0).getData().get(0).toString().equals("3")) {//polygon
@@ -172,7 +170,6 @@ public class SVGPainter {
 				    		g2d.setStroke(d.getEdgeStroke());
 				    		g2d.drawHotSpot(polygon,ph.getApsid(),ph.getName());
 				    	//}
-						hotspotDrawn =true;
 						
 					}else {
 						System.out.println("Type HS non géré :" + members.get(0).getData().get(0).toString());
@@ -191,15 +188,54 @@ public class SVGPainter {
 				}
 			}*/
 			
+		}else if("viewcontext".equals(attributeType)) {			
+			List<Member> members = structuredDataRecord.getMembers();
+
+			if(members!=null && members.size() ==1) {
+				Member first = members.get(0);
+				if(first.getCount()==4) {
+					List<Double> objects = (List<Double>)(Object)first.getData();
+					
+
+					double x1 = objects.get(0);
+					double y1 = objects.get(1);
+					double x2 = objects.get(2);
+					double y2 = objects.get(3);
+
+					if (x1 > x2) {
+						double temp = x1;
+						x1 = x2;
+						x2 = temp;
+					}
+
+					if (y1 > y2) {
+						double temp = y1;
+						y1 = y2;
+						y2 = temp;
+					}
+
+					double w = x2 - x1;
+					double h = y2 - y1;
+
+					Rectangle2D.Double shape = new Rectangle2D.Double(x1, y1, w, h);
+					
+					//d.fill(shape);
+			    	
+					SVGGraphics2DHS g2d =  (SVGGraphics2DHS) d.getGraphics2D();
+					
+					Color trans = new Color(255, 255, 255, 255);
+
+		    		g2d.setColor(trans);
+		    		g2d.setStroke(d.getEdgeStroke());
+		    		g2d.drawTDET(shape,ph.getApsid(),ph.getName());
+					
+				}
+				
+			}
+			
+			
 		}
-	}
-
-	public void hotspotDrawn() {
-		hotspotDrawn=false;
-	}
-
-	public boolean hasPaintedHS() {
-		return hotspotDrawn;
+		
 	}
 
 	/*public String getCurrentApsId() {

@@ -86,6 +86,19 @@ public class PaintHolder {
 		}
 		return null;
 	}
+	
+	public ApplicationStructureAttribute getVCAPS() {
+		if(curentAPS!=null) {
+			for(ApplicationStructureAttribute aps : curentAPS) {
+				String attributeType= aps.getAttributeType();
+				StructuredDataRecord structuredDataRecord = aps.getStructuredDataRecord();
+				if("viewcontext".equals(attributeType)) {
+					return aps;
+				}
+			}
+		}
+		return null;
+	}
 
 	public String getName() {
 		if(curentAPS!=null) {

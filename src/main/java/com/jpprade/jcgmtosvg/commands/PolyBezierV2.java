@@ -110,10 +110,10 @@ public class PolyBezierV2 extends ExtendedCommand{
 	}
 
 	public void paint(CGMDisplay d,BeginFigure figure) {
-		this.paint(d, figure, null, null, null, null, null);
+		this.paint(d, figure, null, null, null, null, null,null,null);
 	}
 	
-	public void paint(CGMDisplay d,BeginFigure figure, FillColour currentFC, EdgeColour currentEC, EdgeWidth currentEW, LineColour currentLC, LineWidth currentLW) {
+	public void paint(CGMDisplay d,BeginFigure figure, FillColour currentFC, EdgeColour currentEC, EdgeWidth currentEW, LineColour currentLC, LineWidth currentLW, String apsid, String apsname) {
 
 
 		int mode = figure == null?0:1;
@@ -130,7 +130,8 @@ public class PolyBezierV2 extends ExtendedCommand{
 			//d.fill(this.curves);
 
 			for (int i = 0; i < this.curves.length; i++) {
-					g2d.draw(this.curves[i]);
+					//g2d.draw(this.curves[i]);
+					drawCustom(g2d, this.curves[i], apsid, apsname);
 			}
 		}else {
 
@@ -156,7 +157,9 @@ public class PolyBezierV2 extends ExtendedCommand{
 			/*if("82,329".equals(fm) || "57,975".equals(fm)) {
 				System.out.println(this.p1[0].x);
 			}*/
-			
+			/*if("216,097".equals(fm)) {
+				System.out.println(this.p1[0].x);
+			}*/
 
 			GeneralPath gp = new GeneralPath();
 
@@ -186,9 +189,9 @@ public class PolyBezierV2 extends ExtendedCommand{
 					//drawHatch(gp,g2d,currentFC.,null);
 					//currentFC.
 					drawHatch(gp,g2d,d.getFillColor(), d.getHatchType());
-					g2d.draw(gp);
+					drawCustom(g2d, gp, apsid, apsname);
 				}else if(InteriorStyle.Style.EMPTY.equals(s)) {
-					g2d.draw(gp);
+					drawCustom(g2d, gp, apsid, apsname);
 				}else {
 					Color fColor = d.getFillColor();
 					g2d.setPaint(fColor);
@@ -196,7 +199,7 @@ public class PolyBezierV2 extends ExtendedCommand{
 					if (d.drawEdge()) {
 			    		g2d.setColor(d.getEdgeColor());
 			    		g2d.setStroke(d.getEdgeStroke());
-			    		g2d.draw(gp);
+			    		drawCustom(g2d, gp, apsid, apsname);
 			    	}
 				}
 				
@@ -207,16 +210,121 @@ public class PolyBezierV2 extends ExtendedCommand{
 					g2d.fill(gp);
 					g2d.setStroke(d.getLineStroke());
 					g2d.setColor(d.getLineColor());
-					g2d.draw(gp);
+					drawCustom(g2d, gp, apsid, apsname);
 					
 				}else {
-					g2d.draw(gp);
+					drawCustom(g2d, gp, apsid, apsname);
 				}
 			}
 			
 			
 		}
 
+	}
+
+
+
+	private void drawCustom(SVGGraphics2DHS g2d, Shape gp,String apsid, String apsname) {
+		/*if(apsid==null)
+			g2d.draw(gp);
+		else
+			g2d.drawHotSpot(gp, apsid, apsname);*/
+		g2d.draw(gp);
+	}
+
+
+
+	public int getContinuityIndicator() {
+		return continuityIndicator;
+	}
+
+
+
+	public void setContinuityIndicator(int continuityIndicator) {
+		this.continuityIndicator = continuityIndicator;
+	}
+
+
+
+	public CubicCurve2D.Double[] getCurves() {
+		return curves;
+	}
+
+
+
+	public void setCurves(CubicCurve2D.Double[] curves) {
+		this.curves = curves;
+	}
+
+
+
+	public Point2D.Double[] getP1() {
+		return p1;
+	}
+
+
+
+	public void setP1(Point2D.Double[] p1) {
+		this.p1 = p1;
+	}
+
+
+
+	public Point2D.Double[] getP2() {
+		return p2;
+	}
+
+
+
+	public void setP2(Point2D.Double[] p2) {
+		this.p2 = p2;
+	}
+
+
+
+	public Point2D.Double[] getP3() {
+		return p3;
+	}
+
+
+
+	public void setP3(Point2D.Double[] p3) {
+		this.p3 = p3;
+	}
+
+
+
+	public Point2D.Double[] getP4() {
+		return p4;
+	}
+
+
+
+	public void setP4(Point2D.Double[] p4) {
+		this.p4 = p4;
+	}
+
+	private Point2D.Double[] concatArray(Point2D.Double[] a1,Point2D.Double[] a2){
+		Point2D.Double[] ret = new Point2D.Double[a1.length+a2.length];
+		int index = 0;
+		for(int i =0;i<a1.length;i++) {
+			ret[index]=a1[i];
+			index++;
+		}
+		for(int i =0;i<a2.length;i++) {
+			ret[index]=a2[i];
+			index++;
+		}
+		return ret;
+	}
+
+
+	public void mergeShape(PolyBezierV2 polyBezierV2) {
+		this.p1 = concatArray(p1,polyBezierV2.getP1());
+		this.p2 = concatArray(p2,polyBezierV2.getP2());
+		this.p3 = concatArray(p3,polyBezierV2.getP3());
+		this.p4 = concatArray(p3,polyBezierV2.getP4());
+		
 	}
 	
 	

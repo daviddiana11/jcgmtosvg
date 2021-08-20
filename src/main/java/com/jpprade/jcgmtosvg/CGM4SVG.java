@@ -3,9 +3,11 @@ package com.jpprade.jcgmtosvg;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Stack;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.jpprade.jcgmtosvg.commands.PolyBezierV2;
 
@@ -45,10 +47,15 @@ public class CGM4SVG extends CGM {
 	
 	private LineColour currentLC = null;
 	
-	private LineWidth currentLW = null;
-	
+	private LineWidth currentLW = null;	
 	
 	private Command lastCommand = null;
+	
+	private boolean hotspotDrawn = false;
+	
+	
+	
+	private ConcurrentHashMap<BeginFigure, List<PolyBezierV2>> figurePolyBezier = new ConcurrentHashMap<>();
 	
 	public CGM4SVG(File cgmFile,SVGPainter painter) throws IOException {
 		super(cgmFile);
@@ -67,6 +74,13 @@ public class CGM4SVG extends CGM {
 					ApplicationStructureAttribute regionaps = mapping.get(top).getRegionAPS();
 					if(regionaps!=null) {					
 						painter.paint(regionaps,d,mapping.get(top));
+						hotspotDrawn=true;
+					}else {
+						ApplicationStructureAttribute vcaps = mapping.get(top).getVCAPS();
+						if(vcaps!=null) {					
+							painter.paint(vcaps,d,mapping.get(top));
+							hotspotDrawn=true;
+						}
 					}
 				}else if(c instanceof BeginApplicationStructure) {// structure parente					
 					this.currentAPS = (BeginApplicationStructure)c;
@@ -76,9 +90,16 @@ public class CGM4SVG extends CGM {
 					mapping.put(currentAPS, ph);
 					
 					painter.paint((BeginApplicationStructure)c,d,ph);
+					if(currentAPS.getIdentifier()!=null && currentAPS.getIdentifier().startsWith("HOT")) {
+						hotspotDrawn=false;//ICN-JP-A-130100-M-C0418-04982-A-04-1.cgm
+					}else {
+						hotspotDrawn=true;//on n'est pas dans une couche HS
+					}
+					
 				}else if(c instanceof BeginFigure) {
 					c.paint(d);
-					this.currentFigure = (BeginFigure)c;				
+					this.currentFigure = (BeginFigure)c;
+					figurePolyBezier.put(currentFigure, new ArrayList<>());
 				}else if(c instanceof EndApplicationStructure) {
 					basStack.pop();
 					
@@ -99,6 +120,33 @@ public class CGM4SVG extends CGM {
 						this.currentLW = mapping.get(top).getCurrentLW();
 					}
 				}else if(c instanceof EndFigure) {
+					List<PolyBezierV2> toPaint = figurePolyBezier.get(currentFigure);
+					
+					if(!toPaint.isEmpty()) {
+						PolyBezierV2 c2 = mergePB(toPaint);					
+						
+						String apsname = null;
+						String apsid = null;
+						if(!basStack.isEmpty()) {
+							
+							BeginApplicationStructure top = basStack.peek();						
+							if(hotspotDrawn==false) {
+								apsname = mapping.get(top).getName();
+								apsid = top.getIdentifier();
+							}							
+							
+							c2.paint(d,currentFigure,
+								mapping.get(top).getCurrentFC(),
+								mapping.get(top).getCurrentEC(),
+								mapping.get(top).getCurrentEW(),
+								mapping.get(top).getCurrentLC(),
+								mapping.get(top).getCurrentLW(),apsid,apsname);
+							
+						}else {
+							c2.paint(d,currentFigure);
+							
+						}
+					}
 					this.currentFigure = null;
 				}else {
 					if(c instanceof PolyBezier) {
@@ -107,22 +155,29 @@ public class CGM4SVG extends CGM {
 						String apsid = null;
 						if(!basStack.isEmpty()) {
 							
-							BeginApplicationStructure top = basStack.peek();						
-							apsname = mapping.get(top).getName();
-							
-							if(apsname!=null && apsname.startsWith("TDET")) {
+							BeginApplicationStructure top = basStack.peek();
+							if(hotspotDrawn==false) {
+								apsname = mapping.get(top).getName();
 								apsid = top.getIdentifier();
-							}else {
-								apsname = null;
 							}
-							c2.paint(d,currentFigure,
+							
+							if(currentFigure==null) {
+								
+								c2.paint(d,currentFigure,
 									mapping.get(top).getCurrentFC(),
 									mapping.get(top).getCurrentEC(),
 									mapping.get(top).getCurrentEW(),
 									mapping.get(top).getCurrentLC(),
-									mapping.get(top).getCurrentLW());
+									mapping.get(top).getCurrentLW(),apsid,apsname);
+							}else {
+								figurePolyBezier.get(currentFigure).add(c2);//tous les polybeziers seront mergé en 1 seule shape
+							}
 						}else {
-							c2.paint(d,currentFigure);
+							if(currentFigure==null) {								
+								c2.paint(d,currentFigure);
+							}else {
+								figurePolyBezier.get(currentFigure).add(c2);
+							}
 						}
 						
 						
@@ -174,6 +229,17 @@ public class CGM4SVG extends CGM {
 				}
 			
 		}
+	}
+
+	private PolyBezierV2 mergePB(List<PolyBezierV2> tomerge) {
+		PolyBezierV2 ret = tomerge.get(0);
+		if(tomerge.size() ==1 ) {
+			return ret;
+		}
+		for(int i = 1;i<tomerge.size();i++) {
+			ret.mergeShape(tomerge.get(i));
+		}
+		return ret;
 	}
 
 
