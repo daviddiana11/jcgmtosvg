@@ -128,6 +128,7 @@ public class PolyBezierV2 extends ExtendedCommand{
 			//g2d.setStroke(d.getEdgeStroke());
 
 			//d.fill(this.curves);
+			
 
 			for (int i = 0; i < this.curves.length; i++) {
 					//g2d.draw(this.curves[i]);
@@ -210,8 +211,12 @@ public class PolyBezierV2 extends ExtendedCommand{
 					g2d.fill(gp);
 					g2d.setStroke(d.getLineStroke());
 					g2d.setColor(d.getLineColor());
-					drawCustom(g2d, gp, apsid, apsname);
-					
+					//drawCustom(g2d, gp, apsid, apsname);
+					if (d.drawEdge()) {
+			    		g2d.setColor(d.getEdgeColor());
+			    		g2d.setStroke(d.getEdgeStroke());
+			    		drawCustom(g2d, gp, apsid, apsname);
+			    	}
 				}else {
 					drawCustom(g2d, gp, apsid, apsname);
 				}
