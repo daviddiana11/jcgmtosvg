@@ -116,15 +116,8 @@ public class JcgmtosvgApplication {
 	}
 
 	
-	public static Set<Integer> getRandom(int max,int number){
-		HashSet<Integer> result = new HashSet<Integer>(); 
-		Random rn = new Random();
-		for(int i =0;i<number;i++) {
-			result.add( rn.nextInt(max));			
-		}
-		return result;	
-		
-	}
+	
+	
 	
 	public File convert(String fileInput,String directoryOutput) throws IOException {
 		return this.convert(fileInput,  directoryOutput,new HashMap<String,Object>(), true);
@@ -212,7 +205,7 @@ public class JcgmtosvgApplication {
 
 	}
 	
-	private boolean findMosaic(CGM4SVG cgm) {
+	public static boolean findMosaic(CGM4SVG cgm) {
 		List<Command> commands = cgm.getCommands();
 		for(Command c : commands) {
 			if (BeginTileArray.class.isInstance(c)) {
@@ -225,7 +218,7 @@ public class JcgmtosvgApplication {
 		return false;
 	}
 
-	private double findScale(CGM4SVG cgm) {
+	public static double findScale(CGM4SVG cgm) {
 		List<Command> commands = cgm.getCommands();
 		for(Command c : commands) {
 			if (ScalingMode.class.isInstance(c)) {
@@ -237,7 +230,7 @@ public class JcgmtosvgApplication {
 		return 0;
 	}
 	
-	private boolean findT6(CGM4SVG cgm) {
+	public static boolean findT6(CGM4SVG cgm) {
 		List<Command> commands = cgm.getCommands();
 		for(Command c : commands) {
 			if (BitonalTile.class.isInstance(c)) {
