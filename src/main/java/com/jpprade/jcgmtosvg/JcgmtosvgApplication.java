@@ -12,26 +12,32 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
-import org.apache.batik.anim.dom.SAXSVGDocumentFactory;
-import org.apache.batik.anim.dom.SVG12DOMImplementation;
 import org.apache.batik.anim.dom.SVGDOMImplementation;
-import org.apache.batik.dom.util.DocumentFactory;
 import org.apache.batik.dom.util.SAXDocumentFactory;
-import org.apache.batik.dom.GenericDOMImplementation;
-import org.apache.batik.dom.GenericElementNS;
 import org.apache.batik.svggen.SVGGeneratorContext;
 import org.apache.batik.svggen.SVGGraphics2D;
 import org.apache.batik.svggen.SVGSyntax;
@@ -41,26 +47,74 @@ import org.apache.batik.transcoder.TranscoderOutput;
 import org.apache.batik.transcoder.image.JPEGTranscoder;
 import org.apache.batik.util.SVGConstants;
 import org.apache.batik.util.XMLResourceDescriptor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.CDATASection;
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.w3c.dom.svg.SVGDocument;
 import org.w3c.dom.svg.SVGSVGElement;
-import org.xml.sax.SAXException;
 
-import com.jpprade.jcgmtosvg.extension.MyExtensionHandler;
-import com.jpprade.jcgmtosvg.extension.MyStyleHandler;
 import com.jpprade.jcgmtosvg.extension.SVGGraphics2DHS;
 
+import net.sf.jcgm.core.BeginTileArray;
+import net.sf.jcgm.core.BitonalTile;
 import net.sf.jcgm.core.CGMDisplay;
+import net.sf.jcgm.core.Command;
+import net.sf.jcgm.core.CompressionType;
+import net.sf.jcgm.core.ScalingMode;
 
 
 public class JcgmtosvgApplication {
-
 	
+	private static Logger logger = LoggerFactory.getLogger(JcgmtosvgApplication.class);
+	
+	
+	
+	public void optimizeHotspot(File svgFile,double scale, boolean isMosaic) {
+		SVGUtils svgu = new SVGUtils();		
+		svgu.moveHotspotToRightLayer(svgFile, svgFile);
+		if(scale> 0 && scale < 0.0001 || isMosaic) {
+			svgu.applyTransformation(svgFile, svgFile);
+			logger.info("Scalling very large illustration : " + svgFile.getAbsolutePath());
+		}
+		
+		
+	}
+
+	public boolean isJPEG(String file) {
+		boolean isjpeg = false;
+		File inputfile = new File(file);
+		InputStream bin;
+		try {
+			bin = new FileInputStream(inputfile);
+			byte[] buffer = new byte[2];
+			bin.read(buffer);
+			int first = unsignedToBytes(buffer[0]);
+			int second= unsignedToBytes(buffer[1]);
+			if(first==0xFF && second==0xD8) {//les jpg commencent par FF D8 (JFIF ou JPEG) 
+				isjpeg = true;
+			}
+			
+			bin.close();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return isjpeg;
+		
+		
+	}
+	
+	public static int unsignedToBytes(byte b) {
+		return b & 0xFF;
+	}
+
 	
 	public static Set<Integer> getRandom(int max,int number){
 		HashSet<Integer> result = new HashSet<Integer>(); 
@@ -71,9 +125,21 @@ public class JcgmtosvgApplication {
 		return result;	
 		
 	}
+	
+	public File convert(String fileInput,String directoryOutput) throws IOException {
+		return this.convert(fileInput,  directoryOutput,new HashMap<String,Object>(), true);
+	}
+	
+	public File convert(String fileInput,String directoryOutput, boolean optimize) throws IOException {
+		return this.convert(fileInput,  directoryOutput,new HashMap<String,Object>(), optimize);
+	}
+	
+	public File convert(String fileInput,String directoryOutput,Map<String,Object> info) throws IOException {
+		return this.convert(fileInput,  directoryOutput,info, true);
+	}
 
-	public void convert(String fileInput,String directoryOutput) throws IOException {
-
+	public File convert(String fileInput,String directoryOutput,Map<String,Object> info,boolean optimize) throws IOException {
+		logger.info("Converting CGM file to SVG :" + fileInput + " optimize = " +optimize);
 		// Get a DOMImplementation.
 		//DOMImplementation domImpl = GenericDOMImplementation.getDOMImplementation();
 		DOMImplementation domImpl = SVGDOMImplementation.getDOMImplementation();
@@ -85,6 +151,27 @@ public class JcgmtosvgApplication {
 		SVGPainter svgPainter = new SVGPainter();
 
 		SVGGeneratorContext ctx = SVGGeneratorContext.createDefault(document);
+		
+		CGM4SVG cgm =loadCgm(fileInput, svgPainter);
+		
+		double scale = findScale(cgm);
+		boolean isMosaic = findMosaic(cgm);
+		isMosaic=false;
+		info.put("Scale", scale);
+		if(scale> 0 && scale <= 0.0001) {
+			ctx.setPrecision(8);			
+			logger.info("Precision 8 " + fileInput + " " + scale);
+		}else if(scale > 0.0001 && scale <0.01) {
+			ctx.setPrecision(4);
+			logger.info("Precision 4 " + fileInput + " " + scale);
+		}else {
+			ctx.setPrecision(4);
+		}
+		
+		boolean isT6 = findT6(cgm);
+		info.put("isT6", isT6);
+		
+		
 		//ctx.setExtensionHandler(new MyExtensionHandler());
 		CDATASection styleSheet = document.createCDATASection("");
 		//ctx.setStyleHandler(new MyStyleHandler(svgPainter,styleSheet));
@@ -93,8 +180,12 @@ public class JcgmtosvgApplication {
 		//SVGGraphics2D svgGenerator = new SVGGraphics2D(document);  
 		SVGGraphics2D svgGenerator = new SVGGraphics2DHS(ctx, false);
 
-		CGM4SVG cgm = paint2(svgGenerator,fileInput,svgPainter);
+		paint2(svgGenerator,cgm);
+		
+		
+		
 		svgGenerator.setSVGCanvasSize(cgm.getSize());
+		
 
 		Element root = createrCss(document, styleSheet, svgGenerator);
 
@@ -108,11 +199,56 @@ public class JcgmtosvgApplication {
 		File outf = new File(dout.getAbsolutePath()+"/"+fname+".svg");
 		FileOutputStream fos = new FileOutputStream(outf);
 		//Writer out = new OutputStreamWriter(System.out, "UTF-8");
-		Writer out = new OutputStreamWriter(fos, "UTF-8");
+		Writer out = new OutputStreamWriter(fos, "ISO-8859-1");
 		//svgGenerator.stream(out, useCSS);
 		svgGenerator.stream(root,out,useCSS,false);
+		
+		if(optimize) {
+			this.optimizeHotspot(outf,scale,isMosaic);
+		}
+		
+		return outf;
 
 
+	}
+	
+	private boolean findMosaic(CGM4SVG cgm) {
+		List<Command> commands = cgm.getCommands();
+		for(Command c : commands) {
+			if (BeginTileArray.class.isInstance(c)) {
+				BeginTileArray bta = (BeginTileArray)c;
+				if(bta.getnTilesInLineDirection() > 1 || bta.getnTilesInPathDirection() > 1) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	private double findScale(CGM4SVG cgm) {
+		List<Command> commands = cgm.getCommands();
+		for(Command c : commands) {
+			if (ScalingMode.class.isInstance(c)) {
+				ScalingMode sm = (ScalingMode)c;
+				double sf = sm.getMetricScalingFactor();
+				return sf;
+			}
+		}
+		return 0;
+	}
+	
+	private boolean findT6(CGM4SVG cgm) {
+		List<Command> commands = cgm.getCommands();
+		for(Command c : commands) {
+			if (BitonalTile.class.isInstance(c)) {
+				BitonalTile bt = (BitonalTile)c;				
+				CompressionType ct = bt.getCompressionType();				
+				if(ct == CompressionType.T6) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	public void convertTojpg(String fileInput,String directoryOutput) throws IOException {
@@ -122,6 +258,35 @@ public class JcgmtosvgApplication {
 
 		File outfjpg = new File(dout.getAbsolutePath()+"/"+fname+".jpg");		 
 		convert2(outf,outfjpg);
+	}
+	
+	public boolean convertTojpgTimeout(String fileInput,String directoryOutput) throws IOException {
+		ExecutorService executor = Executors.newCachedThreadPool();
+		
+		Callable<Boolean> task = new Callable<Boolean>() {
+			public Boolean call() throws IOException {
+				String fname = getFilenameWithoutExtension(new File(fileInput));
+				File dout = new File(directoryOutput);
+				File outf = new File(dout.getAbsolutePath()+"/"+fname+".svg");
+
+				File outfjpg = new File(dout.getAbsolutePath()+"/"+fname+".jpg");		 
+				convert2(outf,outfjpg);
+				return true;
+			}
+		};
+		Future<Boolean> future = executor.submit(task);
+		try {
+			Boolean result = future.get(12, TimeUnit.SECONDS);
+			return result;
+		} catch (TimeoutException ex) {
+			return false;
+		} catch (InterruptedException e) {
+			return false;
+		} catch (ExecutionException e) {
+			return false;
+		} finally {
+			future.cancel(true); // may or may not desire this
+		}
 	}
 
 
@@ -141,8 +306,8 @@ public class JcgmtosvgApplication {
 	/*
 	 * svg -> jpg
 	 */
-	public boolean convert(File source, File destination) {
-
+	/*public boolean convert(File source, File destination) {
+		logger.info("Converting CGM file to SVG " + source);
 		JPEGTranscoder t = new JPEGTranscoder();
 
 		// Set the transcoding hints.
@@ -176,7 +341,7 @@ public class JcgmtosvgApplication {
 			e.printStackTrace();
 			return false;
 		}
-	}
+	}*/
 
 
 	public boolean convert2(File source, File destination) {
@@ -184,7 +349,7 @@ public class JcgmtosvgApplication {
 		JPEGTranscoder t = new JPEGTranscoder();
 
 		// Set the transcoding hints.
-		t.addTranscodingHint(JPEGTranscoder.KEY_QUALITY,new Float(.9));
+		t.addTranscodingHint(JPEGTranscoder.KEY_QUALITY,new Float(1));
 
 		FileInputStream fis;
 		try {
@@ -223,21 +388,34 @@ public class JcgmtosvgApplication {
 			return true;
 
 		} catch (FileNotFoundException e) {
+			System.out.println("Error1 " + source );
 			e.printStackTrace();
+			System.exit(0);
 			return false;
 		} catch (TranscoderException e) {
+			System.out.println("Error2 " + source );
 			e.printStackTrace();
+			System.exit(0);
 			return false;
 		} catch (IOException e) {
+			System.out.println("Error3 " + source );
 			e.printStackTrace();
+			System.exit(0);
 			return false;
 		} catch (XPathExpressionException e) {
+			System.out.println("Error4 " + source );			
 			e.printStackTrace();
+			System.exit(0);
+			return false;
+		}catch(Exception e) {
+			System.out.println("Error5 " + source );			
+			e.printStackTrace();
+			System.exit(0);
 			return false;
 		}
 	}
 
-	public Document getDocument(InputStream is) {
+	public Document getDocument(InputStream is) throws IOException {
 		Document document = null;
 
 		String parserClassname = XMLResourceDescriptor.getXMLParserClassName();
@@ -251,7 +429,7 @@ public class JcgmtosvgApplication {
 		//f.setFeature("http://xml.org/sax/features/external-general-entities", false);
 
 		f.setValidating(false);
-		try {
+		
 
 			document = f.createDocument(namespaceURI,
 					documentElement,
@@ -259,10 +437,7 @@ public class JcgmtosvgApplication {
 					is);
 			return document;
 
-		} catch (IOException ex) {
-			ex.printStackTrace();
-			return null;
-		}
+		
 
 	}
 
@@ -335,8 +510,9 @@ public class JcgmtosvgApplication {
 		style.setAttributeNS(null, SVGSyntax.SVG_TYPE_ATTRIBUTE, "text/css");
 		style.appendChild(styleSheet);
 		defs.appendChild(style);
-		//styleSheet.appendData("svg { height: 101%;}");
-		styleSheet.appendData(".hotspot { cursor: pointer;}");
+		styleSheet.appendData("svg { fill-rule: evenodd;pointer-events: none;}");
+		
+		styleSheet.appendData(".hotspot { cursor: pointer;pointer-events: all;}");
 		styleSheet.appendData("@keyframes blink {100%,0% {fill: transparent;}60% {fill: #f00;}}.hotspotBlink {animation: blink 0.25s 3;}");
 
 		//-----------JS
@@ -354,39 +530,36 @@ public class JcgmtosvgApplication {
 
 		return root;
 	}
-
-
-
-
-	public static CGM4SVG paint2(Graphics2D g2d,String file,SVGPainter svgPainter) {
-
-
+	
+	public static CGM4SVG loadCgm(String file,SVGPainter svgPainter) {
 		File cgmFile = new File(file); 
 		CGM4SVG cgm;
-
-
 		try {
 			cgm = new CGM4SVG(cgmFile,svgPainter);
-			final CGMDisplay display = new CGMDisplay4SVG(cgm);
-			//cgm.paint(cgmDisplay);
-			Dimension size = cgm.getSize();				
-			int width = size.width;
-			int height = size.height;
-			display.scale(g2d, width, height);
-			display.paint(g2d);
-
-
-			return cgm;
-
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return null;
-		}		
+		}
+		return cgm;
+	}
+
+
+
+	public static void paint2(Graphics2D g2d,CGM4SVG cgm) {
+
+		final CGMDisplay display = new CGMDisplay4SVG(cgm);
+		//cgm.paint(cgmDisplay);
+		Dimension size = cgm.getSize();				
+		int width = size.width;
+		int height = size.height;
+		display.scale(g2d, width, height);
+		display.paint(g2d);
+
 
 	}
 
-	private String getFilenameWithoutExtension(File file) throws IOException {
+	static String getFilenameWithoutExtension(File file) throws IOException {
 		String filename = file.getCanonicalPath();
 		String filenameWithoutExtension;
 		if (filename.contains("."))
@@ -398,3 +571,4 @@ public class JcgmtosvgApplication {
 	}
 
 }
+

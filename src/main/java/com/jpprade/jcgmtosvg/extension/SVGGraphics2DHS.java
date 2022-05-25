@@ -8,6 +8,7 @@ import java.util.Map;
 import org.apache.batik.svggen.DOMGroupManager;
 import org.apache.batik.svggen.SVGGeneratorContext;
 import org.apache.batik.svggen.SVGGraphics2D;
+import org.apache.commons.text.StringEscapeUtils;
 import org.w3c.dom.Element;
 
 public class SVGGraphics2DHS extends SVGGraphics2D {
@@ -79,4 +80,17 @@ public class SVGGraphics2DHS extends SVGGraphics2D {
 		svgShape.setAttributeNS(null, "apsid", apsId);
 		svgShape.setAttributeNS(null, "class", "tdet");
 	}
+
+
+
+	@Override
+	public void drawString(String str, int x, int y) {
+		
+		//str = StringEscapeUtils.escapeHtml4(str);
+		super.drawString(str, x, y);
+	}
+	
+	
+	
+	
 }

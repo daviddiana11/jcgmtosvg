@@ -25,6 +25,7 @@ import net.sf.jcgm.core.FillColour;
 import net.sf.jcgm.core.LineColour;
 import net.sf.jcgm.core.LineWidth;
 import net.sf.jcgm.core.PolyBezier;
+import net.sf.jcgm.core.RestrictedText;
 
 public class CGM4SVG extends CGM {
 	
@@ -73,12 +74,12 @@ public class CGM4SVG extends CGM {
 					
 					ApplicationStructureAttribute regionaps = mapping.get(top).getRegionAPS();
 					if(regionaps!=null) {					
-						painter.paint(regionaps,d,mapping.get(top));
+						painter.paint(regionaps,d,mapping.get(top),getSize());
 						hotspotDrawn=true;
 					}else {
 						ApplicationStructureAttribute vcaps = mapping.get(top).getVCAPS();
 						if(vcaps!=null) {					
-							painter.paint(vcaps,d,mapping.get(top));
+							painter.paint(vcaps,d,mapping.get(top),getSize());
 							hotspotDrawn=true;
 						}
 					}
@@ -223,7 +224,10 @@ public class CGM4SVG extends CGM {
 						this.lastCommand=c;
 						c.paint(d);
 					}else {
-						c.paint(d);
+						//if(c instanceof RestrictedText) {
+							c.paint(d);
+						//}
+						
 					}
 					
 				}

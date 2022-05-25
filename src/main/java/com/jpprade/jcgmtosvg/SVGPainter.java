@@ -1,6 +1,7 @@
 package com.jpprade.jcgmtosvg;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Path2D;
@@ -38,7 +39,7 @@ public class SVGPainter {
 		
 	}
 
-	public void paint(ApplicationStructureAttribute aps,CGMDisplay d, PaintHolder ph) {
+	public void paint(ApplicationStructureAttribute aps,CGMDisplay d, PaintHolder ph, Dimension dimension) {
 		SVGGraphics2D graphic = (SVGGraphics2D) d.getGraphics2D();
 		String attributeType= aps.getAttributeType();
 		StructuredDataRecord structuredDataRecord = aps.getStructuredDataRecord();
@@ -197,10 +198,12 @@ public class SVGPainter {
 					List<Double> objects = (List<Double>)(Object)first.getData();
 					
 
-					double x1 = objects.get(0);
+					double x1 = objects.get(0);					
 					double y1 = objects.get(1);
 					double x2 = objects.get(2);
 					double y2 = objects.get(3);
+					
+					
 
 					if (x1 > x2) {
 						double temp = x1;
@@ -216,6 +219,21 @@ public class SVGPainter {
 
 					double w = x2 - x1;
 					double h = y2 - y1;
+					
+					if(x1==Double.NEGATIVE_INFINITY) {
+						x1=0;
+					}
+					if(y1==Double.NEGATIVE_INFINITY) {
+						y1=0;
+					}
+					if(w==Double.POSITIVE_INFINITY) {
+						w=dimension.getWidth();
+						System.out.println("trouve W");
+					}
+					if(h==Double.POSITIVE_INFINITY) {
+						h=dimension.getHeight();
+						System.out.println("trouve H");
+					}
 
 					Rectangle2D.Double shape = new Rectangle2D.Double(x1, y1, w, h);
 					
