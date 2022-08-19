@@ -67,4 +67,10 @@ public class CGMDisplay4SVG extends CGMDisplay{
 		this.getG2d().setClip(previousClippingArea);
 		this.getG2d().setStroke(previousStroke);
 	}
+
+	@Override
+	public void paintBackground() {
+		//pas de rectangle toutes les illus on un fond blanc de toute facon
+		//todo set le background color au niveau global pas avec un vieux rectangle rempli
+	}
 }

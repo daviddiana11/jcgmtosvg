@@ -2,6 +2,9 @@ package com.jpprade.jcgmtosvg;
 
 import java.awt.Dimension;
 import java.awt.Graphics2D;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
+import java.awt.image.Raster;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -31,13 +34,20 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import javax.imageio.ImageIO;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
+import org.apache.batik.anim.dom.AbstractSVGAnimatedLength;
 import org.apache.batik.anim.dom.SVGDOMImplementation;
+import org.apache.batik.anim.dom.SVGOMSVGElement;
+import org.apache.batik.bridge.BridgeContext;
+import org.apache.batik.bridge.GVTBuilder;
+import org.apache.batik.bridge.UserAgentAdapter;
 import org.apache.batik.dom.util.SAXDocumentFactory;
+import org.apache.batik.gvt.GraphicsNode;
 import org.apache.batik.svggen.SVGGeneratorContext;
 import org.apache.batik.svggen.SVGGraphics2D;
 import org.apache.batik.svggen.SVGSyntax;
@@ -47,6 +57,7 @@ import org.apache.batik.transcoder.TranscoderOutput;
 import org.apache.batik.transcoder.image.JPEGTranscoder;
 import org.apache.batik.util.SVGConstants;
 import org.apache.batik.util.XMLResourceDescriptor;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.CDATASection;
@@ -347,12 +358,8 @@ public class JcgmtosvgApplication {
 		FileInputStream fis;
 		try {
 			fis = new FileInputStream(source);
-
-
-			/*DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();  
-			//an instance of builder to parse the specified xml file  
-			DocumentBuilder db = dbf.newDocumentBuilder();  
-			Document document = db.parse(source);*/
+			
+			//On supprime les hostpost
 			Document document = getDocument(fis);
 
 			XPath xPath = XPathFactory.newInstance().newXPath();
@@ -364,6 +371,10 @@ public class JcgmtosvgApplication {
 				Element hotspot = (Element)node;	
 				hotspot.getParentNode().removeChild(hotspot);
 			}
+			
+			boolean resized = setMaxResolution(document);
+			
+			
 
 
 			TranscoderInput input = new TranscoderInput(document);
@@ -378,6 +389,10 @@ public class JcgmtosvgApplication {
 			// Flush and close the stream.
 			ostream.flush();
 			ostream.close();
+			
+			/*if(resized) {
+				trimImage(destination);
+			}*/
 			return true;
 
 		} catch (FileNotFoundException e) {
@@ -406,6 +421,140 @@ public class JcgmtosvgApplication {
 			System.exit(0);
 			return false;
 		}
+	}
+
+	private void trimImage(File destination) {
+		BufferedImage img = null;
+		try {
+		    img = ImageIO.read(destination);
+		    
+		    int maxW=0;
+		    int maxH=0;
+		    
+		    for(int i = 0; i< img.getWidth();i++) {
+		    	for(int j = 0; j< img.getHeight();j++) {
+		    		int argb = img.getRGB(i, j);
+		    		
+		    		int r = (argb>>16)&0xFF;
+		    		int g = (argb>>8)&0xFF;
+		    		int b = (argb>>0)&0xFF;
+		    		if(r!= 255 || g!=255 || b!=255) {
+		    			if(i>maxW) {
+		    				maxW=i;
+		    			}
+		    			if(j>maxH) {
+		    				maxH=j;
+		    			}
+		    			continue;
+		    		}
+		    		
+		    	}
+		    }
+		    System.out.println("taille to trim=" + maxW + " * " +maxH );
+		    
+		    img = img.getSubimage(0, 0, maxW + 10, maxH + 10);//petite marge
+		    
+		    ImageIO.write(img, "JPG", destination);
+		    
+		} catch (IOException e) {
+			System.out.println("Error6 " + destination.getAbsolutePath() );			
+			e.printStackTrace();
+		}
+		
+	}
+	
+	public static BufferedImage crop(BufferedImage image) {
+	    int minY = 0, maxY = 0, minX = Integer.MAX_VALUE, maxX = 0;
+	    boolean isBlank, minYIsDefined = false;
+	    Raster raster = image.getRaster();
+
+	    for (int y = 0; y < image.getHeight(); y++) {
+	        isBlank = true;
+
+	        for (int x = 0; x < image.getWidth(); x++) {
+	            //Change condition to (raster.getSample(x, y, 3) != 0) 
+	            //for better performance
+	            if (raster.getPixel(x, y, (int[]) null)[3] != 0) {
+	                isBlank = false;
+
+	                if (x < minX) minX = x;
+	                if (x > maxX) maxX = x;
+	            }
+	        }
+
+	        if (!isBlank) {
+	            if (!minYIsDefined) {
+	                minY = y;
+	                minYIsDefined = true;
+	            } else {
+	                if (y > maxY) maxY = y;
+	            }
+	        }
+	    }
+
+	    return image.getSubimage(minX, minY, maxX - minX + 1, maxY - minY + 1);
+	}
+	
+
+	private boolean setMaxResolution(Document document) {
+		
+		BridgeContext ctx = new BridgeContext(new UserAgentAdapter());
+		GVTBuilder builder = new GVTBuilder();
+		GraphicsNode gvtRoot = builder.build(ctx, document);
+		Rectangle2D rc = gvtRoot.getSensitiveBounds();
+		
+		System.out.println(rc.getWidth() );
+		System.out.println(rc.getHeight() );
+		System.out.println(rc.getX() );
+		System.out.println(rc.getY() );
+		
+		//on ajoute une marge de 100px autour
+		int margin = 100;
+		double width = rc.getWidth() + 2 * margin;
+		double height = rc.getHeight() + 2 * margin;
+		double x = rc.getX() - margin;
+		double y = rc.getY() - margin ;
+		
+		//on verifie la taille du canvas, on la limite si elle est trop grande
+		Element e = document.getDocumentElement();		
+		
+		SVGOMSVGElement svgElement = (SVGOMSVGElement) e;
+		
+		
+		if(StringUtils.isEmpty(e.getAttribute("width")) || StringUtils.isEmpty(e.getAttribute("height"))) {
+			return false;
+		}
+		
+		// 'width' attribute - default is 100%
+		AbstractSVGAnimatedLength _width = (AbstractSVGAnimatedLength) svgElement.getWidth();
+		float w = _width.getCheckedValue();
+
+		// 'height' attribute - default is 100%
+		AbstractSVGAnimatedLength _height =(AbstractSVGAnimatedLength) svgElement.getHeight();
+		float h = _height.getCheckedValue();
+		
+		
+		float ratio = w/h;		
+		if(w > 3000) {
+			/*int newW = 3000;
+			int newH = (int)(newW / ratio);
+			
+			e.setAttribute("width", String.valueOf(newW));
+			e.setAttribute("height", String.valueOf(newH));*/
+			
+			e.setAttribute("width", String.valueOf(width));
+			e.setAttribute("height", String.valueOf(height));
+			
+			e.setAttribute("viewBox", String.valueOf((int)x) 
+					+ " " + String.valueOf((int)y)
+					+ " " + String.valueOf((int)width)
+					+ " " + String.valueOf((int)height));
+			return true;
+		}
+		//todo sauvegarder la modif de viewbox et viewport dans le svg pour éviter le scroll
+		//todo 2 faire ca aussi pour les svg de taille normale ?
+		
+		return false;
 	}
 
 	public Document getDocument(InputStream is) throws IOException {
