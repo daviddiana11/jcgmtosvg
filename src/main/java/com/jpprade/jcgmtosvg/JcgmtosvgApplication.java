@@ -51,6 +51,7 @@ import org.apache.batik.gvt.GraphicsNode;
 import org.apache.batik.svggen.SVGGeneratorContext;
 import org.apache.batik.svggen.SVGGraphics2D;
 import org.apache.batik.svggen.SVGSyntax;
+import org.apache.batik.svggen.StyleHandler;
 import org.apache.batik.transcoder.TranscoderException;
 import org.apache.batik.transcoder.TranscoderInput;
 import org.apache.batik.transcoder.TranscoderOutput;
@@ -68,6 +69,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.svg.SVGSVGElement;
 
+import com.jpprade.jcgmtosvg.extension.MyStyleHandler;
 import com.jpprade.jcgmtosvg.extension.SVGGraphics2DHS;
 
 import net.sf.jcgm.core.BeginTileArray;
@@ -178,11 +180,15 @@ public class JcgmtosvgApplication {
 		
 		//ctx.setExtensionHandler(new MyExtensionHandler());
 		CDATASection styleSheet = document.createCDATASection("");
-		//ctx.setStyleHandler(new MyStyleHandler(svgPainter,styleSheet));
+		MyStyleHandler sh = new MyStyleHandler(svgPainter,styleSheet);
+		ctx.setStyleHandler(sh);
+		cgm.setStyleHandler(sh);
 
 		// Create an instance of the SVG Generator.
 		//SVGGraphics2D svgGenerator = new SVGGraphics2D(document);  
 		SVGGraphics2D svgGenerator = new SVGGraphics2DHS(ctx, false);
+		
+		
 
 		paint2(svgGenerator,cgm);
 		
@@ -347,7 +353,13 @@ public class JcgmtosvgApplication {
 		}
 	}*/
 
-
+	/**
+	 * convert a SVG to a JPG
+	 * 
+	 * @param source SVG
+	 * @param destination JPG
+	 * @return
+	 */
 	public boolean convert2(File source, File destination) {
 
 		JPEGTranscoder t = new JPEGTranscoder();
@@ -503,11 +515,13 @@ public class JcgmtosvgApplication {
 		GraphicsNode gvtRoot = builder.build(ctx, document);
 		Rectangle2D rc = gvtRoot.getSensitiveBounds();
 		
-		System.out.println(rc.getWidth() );
+		/*System.out.println(rc.getWidth() );
 		System.out.println(rc.getHeight() );
 		System.out.println(rc.getX() );
-		System.out.println(rc.getY() );
-		
+		System.out.println(rc.getY() );*/
+		if(rc==null) {
+			return false;
+		}
 		//on ajoute une marge de 100px autour
 		int margin = 100;
 		double width = rc.getWidth() + 2 * margin;

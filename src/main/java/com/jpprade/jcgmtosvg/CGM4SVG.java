@@ -9,7 +9,13 @@ import java.util.List;
 import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.batik.svggen.StyleHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.w3c.dom.Element;
+
 import com.jpprade.jcgmtosvg.commands.PolyBezierV2;
+import com.jpprade.jcgmtosvg.extension.MyStyleHandler;
 
 import net.sf.jcgm.core.ApplicationStructureAttribute;
 import net.sf.jcgm.core.BeginApplicationStructure;
@@ -25,7 +31,8 @@ import net.sf.jcgm.core.FillColour;
 import net.sf.jcgm.core.LineColour;
 import net.sf.jcgm.core.LineWidth;
 import net.sf.jcgm.core.PolyBezier;
-import net.sf.jcgm.core.RestrictedText;
+import net.sf.jcgm.core.Polyline;
+
 
 public class CGM4SVG extends CGM {
 	
@@ -54,9 +61,11 @@ public class CGM4SVG extends CGM {
 	
 	private boolean hotspotDrawn = false;
 	
-	
+	private static Logger logger = LoggerFactory.getLogger(CGM4SVG.class);	
 	
 	private ConcurrentHashMap<BeginFigure, List<PolyBezierV2>> figurePolyBezier = new ConcurrentHashMap<>();
+
+	private MyStyleHandler styleHandler;
 	
 	public CGM4SVG(File cgmFile,SVGPainter painter) throws IOException {
 		super(cgmFile);
@@ -223,10 +232,27 @@ public class CGM4SVG extends CGM {
 						this.currentLW = (LineWidth) c;
 						this.lastCommand=c;
 						c.paint(d);
-					}else {
-						//if(c instanceof RestrictedText) {
+					}else {						
+						if((c instanceof Polyline)
+								&& !basStack.isEmpty()
+								&& basStack.peek()!=null
+								&& mapping.get(basStack.peek()).getName().startsWith("TDET")								
+								&& mapping.get(basStack.peek()).getRegionAPS()==null 
+								&& mapping.get(basStack.peek()).getVCAPS()==null ) {
+							logger.info("Found TDET APS structure without view context, using the polylione as viewcontext");
 							c.paint(d);
-						//}
+							Element svgShape = this.styleHandler.getLast();
+							svgShape.setAttributeNS(null, "id", mapping.get(basStack.peek()).getApsid());
+							svgShape.setAttributeNS(null, "apsname", mapping.get(basStack.peek()).getName());
+							svgShape.setAttributeNS(null, "apsid", mapping.get(basStack.peek()).getApsid());
+							/*svgShape.setAttributeNS(null, "fill-rule", "evenodd");
+							svgShape.setAttributeNS(null, "fill", "transparent");
+							svgShape.setAttributeNS(null, "class", "hotspot");
+							svgShape.setAttributeNS(null, "onclick", "clickHS('"+apsId+"')");
+							svgShape.setAttributeNS(null, "stroke-width", "0");*/
+						}else {
+							c.paint(d);
+						}
 						
 					}
 					
@@ -244,6 +270,11 @@ public class CGM4SVG extends CGM {
 			ret.mergeShape(tomerge.get(i));
 		}
 		return ret;
+	}
+
+	public void setStyleHandler(MyStyleHandler sh) {
+		this.styleHandler=sh;
+		
 	}
 
 

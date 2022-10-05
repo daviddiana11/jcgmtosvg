@@ -1,14 +1,15 @@
 package com.jpprade.jcgmtosvg.extension;
 
 import java.util.Map;
+import java.util.Stack;
 
 import org.apache.batik.svggen.DefaultStyleHandler;
 import org.apache.batik.svggen.SVGGeneratorContext;
-import org.apache.batik.svggen.StyleHandler;
 import org.w3c.dom.CDATASection;
 import org.w3c.dom.Element;
 
 import com.jpprade.jcgmtosvg.SVGPainter;
+
 
 public class MyStyleHandler extends DefaultStyleHandler {
 	
@@ -18,6 +19,8 @@ public class MyStyleHandler extends DefaultStyleHandler {
 	
 	Element lastElement = null;
 	
+	private Stack<Element> elementStack = new Stack<Element>();
+	
 	public MyStyleHandler(SVGPainter svgPainter,CDATASection styleSheet) {
 	    this.styleSheet = styleSheet;
 	    this.svgPainter=svgPainter;
@@ -25,7 +28,7 @@ public class MyStyleHandler extends DefaultStyleHandler {
 
 
 	public void setStyle(Element element, Map styleMap, SVGGeneratorContext generatorContext) {
-		
+		elementStack.add(element);
 		/*
 		if(svgPainter.hasPaintedHS()) {
 			String apsId = getSvgPainter().getCurrentApsId();
@@ -69,6 +72,10 @@ public class MyStyleHandler extends DefaultStyleHandler {
 
 	public void setSvgPainter(SVGPainter svgPainter) {
 		this.svgPainter = svgPainter;
+	}
+	
+	public Element getLast() {
+		return elementStack.peek();
 	}
 
 }

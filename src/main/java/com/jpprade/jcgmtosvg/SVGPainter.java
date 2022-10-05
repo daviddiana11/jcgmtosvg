@@ -227,12 +227,10 @@ public class SVGPainter {
 						y1=0;
 					}
 					if(w==Double.POSITIVE_INFINITY) {
-						w=dimension.getWidth();
-						System.out.println("trouve W");
+						w=dimension.getWidth();						
 					}
 					if(h==Double.POSITIVE_INFINITY) {
 						h=dimension.getHeight();
-						System.out.println("trouve H");
 					}
 
 					Rectangle2D.Double shape = new Rectangle2D.Double(x1, y1, w, h);
