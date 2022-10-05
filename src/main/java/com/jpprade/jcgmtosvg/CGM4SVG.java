@@ -67,9 +67,12 @@ public class CGM4SVG extends CGM {
 
 	private MyStyleHandler styleHandler;
 	
-	public CGM4SVG(File cgmFile,SVGPainter painter) throws IOException {
+	boolean handleAPSwithNoviewContext = true;
+	
+	public CGM4SVG(File cgmFile,SVGPainter painter, boolean handleAPSwithNoviewContext) throws IOException {
 		super(cgmFile);
 		this.painter= painter;
+		this.handleAPSwithNoviewContext=handleAPSwithNoviewContext;
 	}
 
 	@Override
@@ -238,7 +241,8 @@ public class CGM4SVG extends CGM {
 								&& basStack.peek()!=null
 								&& mapping.get(basStack.peek()).getName().startsWith("TDET")								
 								&& mapping.get(basStack.peek()).getRegionAPS()==null 
-								&& mapping.get(basStack.peek()).getVCAPS()==null ) {
+								&& mapping.get(basStack.peek()).getVCAPS()==null 
+								&& handleAPSwithNoviewContext) {
 							logger.info("Found TDET APS structure without view context, using the polylione as viewcontext");
 							c.paint(d);
 							Element svgShape = this.styleHandler.getLast();

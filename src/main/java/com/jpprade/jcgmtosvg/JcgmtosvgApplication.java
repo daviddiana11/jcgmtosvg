@@ -690,8 +690,9 @@ public class JcgmtosvgApplication {
 	public static CGM4SVG loadCgm(String file,SVGPainter svgPainter) {
 		File cgmFile = new File(file); 
 		CGM4SVG cgm;
+		boolean handleAPSwithNoviewContext = (file.indexOf("ICN-02") >=0 || file.indexOf("ICN-JP")>=0) ? true:false;
 		try {
-			cgm = new CGM4SVG(cgmFile,svgPainter);
+			cgm = new CGM4SVG(cgmFile,svgPainter,handleAPSwithNoviewContext);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
