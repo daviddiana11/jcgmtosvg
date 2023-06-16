@@ -144,7 +144,7 @@ public class JcgmtosvgApplication {
 		return this.convert(fileInput,  directoryOutput,info, true);
 	}
 
-	public File convert(String fileInput,String directoryOutput,Map<String,Object> info,boolean optimize) throws IOException {
+	public File convert(String fileInput,String directoryOutput,Map<String,Object> info,boolean optimize)  throws IOException {
 		logger.info("Converting CGM file to SVG :" + fileInput + " optimize = " +optimize);
 		// Get a DOMImplementation.
 		//DOMImplementation domImpl = GenericDOMImplementation.getDOMImplementation();
@@ -158,7 +158,13 @@ public class JcgmtosvgApplication {
 
 		SVGGeneratorContext ctx = SVGGeneratorContext.createDefault(document);
 		
-		CGM4SVG cgm =loadCgm(fileInput, svgPainter);
+		CGM4SVG cgm = null;
+		try {
+			cgm =loadCgm(fileInput, svgPainter);
+		}catch(Exception error) {
+			logger.error("Error convertion" + fileInput + ", " + error.getMessage(),error);
+			throw error;
+		}
 		
 		double scale = findScale(cgm);
 		boolean isMosaic = findMosaic(cgm);
@@ -209,7 +215,8 @@ public class JcgmtosvgApplication {
 		File outf = new File(dout.getAbsolutePath()+"/"+fname+".svg");
 		FileOutputStream fos = new FileOutputStream(outf);
 		//Writer out = new OutputStreamWriter(System.out, "UTF-8");
-		Writer out = new OutputStreamWriter(fos, "ISO-8859-1");
+		Writer out = new OutputStreamWriter(fos, "UTF-8");
+		//Writer out = new OutputStreamWriter(fos, "ISO-8859-1");
 		//svgGenerator.stream(out, useCSS);
 		svgGenerator.stream(root,out,useCSS,false);
 		
@@ -352,6 +359,10 @@ public class JcgmtosvgApplication {
 			return false;
 		}
 	}*/
+	
+	public boolean convert2(File source, File destination) {
+		return convert2(source,destination,0.90f);
+	}
 
 	/**
 	 * convert a SVG to a JPG
@@ -360,12 +371,12 @@ public class JcgmtosvgApplication {
 	 * @param destination JPG
 	 * @return
 	 */
-	public boolean convert2(File source, File destination) {
+	public boolean convert2(File source, File destination,float quality) {
 
 		JPEGTranscoder t = new JPEGTranscoder();
 
 		// Set the transcoding hints.
-		t.addTranscodingHint(JPEGTranscoder.KEY_QUALITY,new Float(1));
+		t.addTranscodingHint(JPEGTranscoder.KEY_QUALITY,quality);
 
 		FileInputStream fis;
 		try {

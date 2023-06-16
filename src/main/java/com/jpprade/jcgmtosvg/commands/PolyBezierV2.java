@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Shape;
 import java.awt.Stroke;
+import java.awt.geom.Area;
 import java.awt.geom.CubicCurve2D;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
@@ -45,6 +46,8 @@ public class PolyBezierV2 extends ExtendedCommand{
 	private Point2D.Double[] p2;
 	private Point2D.Double[] p3;
 	private Point2D.Double[] p4;
+	
+	public Shape shapedrawn = null;
 
 	public PolyBezierV2(PolyBezier polyBezier) {
 
@@ -128,12 +131,16 @@ public class PolyBezierV2 extends ExtendedCommand{
 			//g2d.setStroke(d.getEdgeStroke());
 
 			//d.fill(this.curves);
-			
-
+			GeneralPath gp = new GeneralPath();
 			for (int i = 0; i < this.curves.length; i++) {
 					//g2d.draw(this.curves[i]);
-					drawCustom(g2d, this.curves[i], apsid, apsname);
+					Shape curve = this.curves[i];
+					//drawCustom(g2d, this.curves[i], d);
+					gp.append(curve, true);
 			}
+			//gp.closePath();
+			
+			drawCustom(g2d, gp, d);
 		}else {
 
 
@@ -190,9 +197,9 @@ public class PolyBezierV2 extends ExtendedCommand{
 					//drawHatch(gp,g2d,currentFC.,null);
 					//currentFC.
 					drawHatch(gp,g2d,d.getFillColor(), d.getHatchType());
-					drawCustom(g2d, gp, apsid, apsname);
+					drawCustom(g2d, gp, d);
 				}else if(InteriorStyle.Style.EMPTY.equals(s)) {
-					drawCustom(g2d, gp, apsid, apsname);
+					drawCustom(g2d, gp, d);
 				}else {
 					Color fColor = d.getFillColor();
 					g2d.setPaint(fColor);
@@ -200,7 +207,7 @@ public class PolyBezierV2 extends ExtendedCommand{
 					if (d.drawEdge()) {
 			    		g2d.setColor(d.getEdgeColor());
 			    		g2d.setStroke(d.getEdgeStroke());
-			    		drawCustom(g2d, gp, apsid, apsname);
+			    		drawCustom(g2d, gp, d);
 			    	}
 				}
 				
@@ -215,10 +222,10 @@ public class PolyBezierV2 extends ExtendedCommand{
 					if (d.drawEdge()) {
 			    		g2d.setColor(d.getEdgeColor());
 			    		g2d.setStroke(d.getEdgeStroke());
-			    		drawCustom(g2d, gp, apsid, apsname);
+			    		drawCustom(g2d, gp, d);
 			    	}
 				}else {
-					drawCustom(g2d, gp, apsid, apsname);
+					drawCustom(g2d, gp, d);
 				}
 			}
 			
@@ -229,12 +236,9 @@ public class PolyBezierV2 extends ExtendedCommand{
 
 
 
-	private void drawCustom(SVGGraphics2DHS g2d, Shape gp,String apsid, String apsname) {
-		/*if(apsid==null)
-			g2d.draw(gp);
-		else
-			g2d.drawHotSpot(gp, apsid, apsname);*/
+	private void drawCustom(SVGGraphics2DHS g2d, Shape gp,CGMDisplay d) {		
 		g2d.draw(gp);
+		d.drawCallback(gp);
 	}
 
 
@@ -331,6 +335,12 @@ public class PolyBezierV2 extends ExtendedCommand{
 		this.p4 = concatArray(p3,polyBezierV2.getP4());
 		
 	}
+
+
+	public Shape getShapedrawn() {
+		return shapedrawn;
+	}
+
 	
 	
 	
