@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.jpprade</groupId>
   <artifactId>jcgmtosvg</artifactId>
-  <version>0.0.10</version>
+  <version>0.0.11</version>
   <dependencies>
 
 
@@ -59,9 +59,10 @@
 			<groupId>jcgm-core</groupId>
 			<artifactId>jcgm-core</artifactId>
 			<version>0.7.2</version>
-			
+			<!-- 
 			<scope>system</scope>
 			<systemPath>${basedir}/../jcgm-core/build/jcgm-core-0.7.2.jar</systemPath>
+			-->
 		</dependency>
 		 
   

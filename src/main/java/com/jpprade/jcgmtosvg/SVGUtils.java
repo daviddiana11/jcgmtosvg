@@ -1,8 +1,11 @@
 package com.jpprade.jcgmtosvg;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.regex.Matcher;
@@ -128,18 +131,18 @@ public class SVGUtils {
 			}*/
 
 
-
-
+			
+			
 			DOMSource source = new DOMSource(doc);
-			FileWriter writer = new FileWriter(destination);
-			StreamResult result = new StreamResult(writer);
+			FileOutputStream fos = new FileOutputStream(destination);
+			Writer out = new OutputStreamWriter(fos, "UTF-8");
+			StreamResult result = new StreamResult(out);
 
 			TransformerFactory transformerFactory = TransformerFactory.newInstance();
 			Transformer transformer = transformerFactory.newTransformer();
-			transformer.setOutputProperty(OutputKeys.ENCODING, "ISO-8859-1");
+			transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
 			transformer.transform(source, result);
-			
-			
+		
 
 
 		} catch (ParserConfigurationException e) {
@@ -281,16 +284,17 @@ public class SVGUtils {
 				}
 			}
 
-
+			
 
 
 			DOMSource source = new DOMSource(doc);
-			FileWriter writer = new FileWriter(destination);
-			StreamResult result = new StreamResult(writer);
+			FileOutputStream fos = new FileOutputStream(destination);
+			Writer out = new OutputStreamWriter(fos, "UTF-8");
+			StreamResult result = new StreamResult(out);
 
 			TransformerFactory transformerFactory = TransformerFactory.newInstance();
 			Transformer transformer = transformerFactory.newTransformer();
-			transformer.setOutputProperty(OutputKeys.ENCODING, "ISO-8859-1");
+			transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
 			transformer.transform(source, result);
 
 
