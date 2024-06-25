@@ -76,7 +76,9 @@ public class CGM4SVG extends CGM {
 				this.figurePolyBezier.put(this.currentFigure, new ArrayList<>());
 			} else if (c instanceof EndApplicationStructure) {
 				this.basStack.pop();
-				this.basStack.peek();
+				if (!this.basStack.empty()) {
+					this.basStack.peek();
+				}
 			} else if (c instanceof EndFigure) {
 				List<PolyBezierV2> toPaint = this.figurePolyBezier.get(this.currentFigure);
 				
