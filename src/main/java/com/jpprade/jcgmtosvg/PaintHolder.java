@@ -94,13 +94,13 @@ public class PaintHolder {
 			StructuredDataRecord structuredDataRecord = aps.getSdr();
 			if ("name".equals(attributeType)) {
 				List<Member> members = structuredDataRecord.getMembers();
-				if (members != null 
-						&& members.size() == 1 
-						&& members.get(0).getCount() > 0 
-						&& members.get(0).getData() != null
-						&& !members.get(0).getData().isEmpty()
-						&& members.get(0).getData().get(0) instanceof String s) {
-							return s;
+				if (members != null
+						&& members.size() == 1
+						&& members.getFirst().getCount() > 0
+						&& members.getFirst().getData() != null
+						&& !members.getFirst().getData().isEmpty()
+						&& members.getFirst().getData().getFirst() instanceof String s) {
+					return s;
 				}
 			}
 		}

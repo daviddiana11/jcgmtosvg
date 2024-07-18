@@ -1,5 +1,6 @@
 package com.jpprade.jcgmtosvg;
 
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -29,6 +30,7 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.util.Collection;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -159,10 +161,10 @@ public class SVGUtils {
 	/**
 	 * all possible transformation (found in ietp 19)
 	 * <p>
-	 * 2980 matrix()
-	 * 1 matrix() scale()
-	 * 151948 matrix() scale()
-	 * 109909 matrix() translate() scale()
+	 * 2980 matrix()<br>
+	 * 1 matrix() scale()<br>
+	 * 151948 matrix() scale()<br>
+	 * 109909 matrix() translate() scale()<br>
 	 *
 	 * @param sourceF
 	 * @param destination
@@ -220,13 +222,13 @@ public class SVGUtils {
 							recalculateRect(child, matrix);
 							updateStyle(child, matrix.m00);
 						} else {
-							System.out.println("ERROR SHAPE NON GERE" + child.getNodeName());
+							logger.warn("unhandled shape " + child.getNodeName());
 						}
 					}
 				}
 			}
 			
-			//transformation des images
+			// transform images
 			{
 				String expressionG = "//image[@transform]";
 				NodeList nodeList = (NodeList) xPath.compile(expressionG).evaluate(doc, XPathConstants.NODESET);
@@ -255,8 +257,7 @@ public class SVGUtils {
 			transformer.transform(source, result);
 		} catch (SAXException | IOException | ParserConfigurationException |
 		         XPathExpressionException | TransformerException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.error(e.getMessage(), e);
 		}
 	}
 	
@@ -348,7 +349,7 @@ public class SVGUtils {
 				float ry = Float.parseFloat(coos[1]);
 				float xaxis = Float.parseFloat(coos[2]);
 				int laf = Integer.parseInt(coos[3]);
-//				int sf = Integer.parseInt(coos[4]);
+				// int sf = Integer.parseInt(coos[4]);
 				float x = Float.parseFloat(coos[5]);
 				float y = Float.parseFloat(coos[6]);
 				Point rxy = new Point(rx, ry);
@@ -359,7 +360,7 @@ public class SVGUtils {
 				newD.append(rxy.toString()).append(" ");
 				newD.append(xaxis).append(" ");
 				newD.append(laf).append(" ");
-				//newD.append(sf + " ");
+				// newD.append(sf + " ");
 				newD.append("1 ");// need to invert all arcs
 				newD.append(xy.toString());
 			} else if ("Z".equals(letter)) {
@@ -400,10 +401,8 @@ public class SVGUtils {
 			final Matcher matcher = pattern.matcher(transforms[i]);
 			
 			while (matcher.find()) {
-				
 				String type = matcher.group(1);
 				String value = matcher.group(2);
-				//System.out.println("Full match: " + matcher.group(0));
 				
 				if ("matrix".contentEquals(type)) {
 					matrix = parseMatrix(value);
@@ -657,13 +656,20 @@ public class SVGUtils {
 	}
 	
 	public static void main(String[] args) {
-		String input = "pathToYourCGM";
-		String output = "pathToTheSVGOutputDir";
-		try {
-			new JcgmtosvgApplication().convert(input, output);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
+		String input = "path to the folder containing the CGMs";
+		String output = "path to the folder where your want the SVGs to be generated";
+		
+		final Collection<File> cgms = FileUtils.listFiles(new File(input), new String[]{"cgm"}, false);
+		final long begin = System.currentTimeMillis();
+		for (File cgmFile : cgms) {
+			try {
+				new JcgmtosvgApplication().convert(cgmFile.getAbsolutePath(), output);
+			} catch (IOException e) {
+				logger.error("Error while converting CGM {}", cgmFile);
+			}
 		}
+		final long end = System.currentTimeMillis();
+		logger.debug("The conversion took {}ms", end - begin);
 	}
 	
 }

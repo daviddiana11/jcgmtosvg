@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystems;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,7 +42,7 @@ public class JcgmtosvgApplication {
 		svgu.moveHotspotToRightLayer(svgFile, svgFile);
 		if (scale > 0 && scale < 0.0001 || isMosaic) {
 			svgu.applyTransformation(svgFile, svgFile);
-			logger.info("Scaling very large illustration : " + svgFile.getAbsolutePath());
+			logger.info("Scaling very large illustration: {}", svgFile.getAbsolutePath());
 		}
 	}
 	
@@ -66,9 +67,8 @@ public class JcgmtosvgApplication {
 	}
 	
 	public File convert(String fileInput, String directoryOutput, Map<String, Object> info, boolean optimize) throws IOException {
-		logger.info("Converting CGM file to SVG :" + fileInput + " optimize = " + optimize);
+		logger.info("Converting CGM file to SVG: {} optimize = {}", fileInput, optimize);
 		// Get a DOMImplementation.
-		//DOMImplementation domImpl = GenericDOMImplementation.getDOMImplementation();
 		DOMImplementation domImpl = SVGDOMImplementation.getDOMImplementation();
 		
 		// Create an instance of org.w3c.dom.Document.
@@ -82,13 +82,13 @@ public class JcgmtosvgApplication {
 		CGM4SVG cgm;
 		try {
 			cgm = loadCgm(fileInput, svgPainter);
-		} catch (Exception error) {
-			logger.error("Error convertion" + fileInput + ", " + error.getMessage(), error);
-			throw error;
+		} catch (Exception e) {
+			logger.error("Error while converting " + fileInput + ", " + e.getMessage(), e);
+			throw new JcgmToSvgException("Error while converting the file", e.getCause());
 		}
 		
 		if (cgm == null) {
-			throw new RuntimeException("could not load the CGM");
+			throw new JcgmToSvgException("Could not load the CGM");
 		}
 		
 		double scale = findScale(cgm);
@@ -96,10 +96,10 @@ public class JcgmtosvgApplication {
 		info.put("Scale", scale);
 		if (scale > 0 && scale <= 0.0001) {
 			ctx.setPrecision(8);
-			logger.info("Precision 8 " + fileInput + " " + scale);
+			logger.info("Precision 8 {} {}", fileInput, scale);
 		} else if (scale > 0.0001 && scale < 0.01) {
 			ctx.setPrecision(4);
-			logger.info("Precision 4 " + fileInput + " " + scale);
+			logger.info("Precision 4 {} {}", fileInput, scale);
 		} else {
 			ctx.setPrecision(4);
 		}
@@ -110,7 +110,6 @@ public class JcgmtosvgApplication {
 		CDATASection styleSheet = document.createCDATASection("");
 		
 		// Create an instance of the SVG Generator.
-		//SVGGraphics2D svgGenerator = new SVGGraphics2D(document);  
 		SVGGraphics2D svgGenerator = new SVGGraphics2DHS(ctx, false);
 		
 		paint2(svgGenerator, cgm);
@@ -141,10 +140,8 @@ public class JcgmtosvgApplication {
 	public static boolean findMosaic(CGM4SVG cgm) {
 		List<Command> commands = cgm.getCommands();
 		for (Command c : commands) {
-			if (c instanceof BeginTileArray bta) {
-				if (bta.getnTilesInLineDirection() > 1 || bta.getnTilesInPathDirection() > 1) {
+			if (c instanceof BeginTileArray bta && (bta.getnTilesInLineDirection() > 1 || bta.getnTilesInPathDirection() > 1)) {
 					return true;
-				}
 			}
 		}
 		return false;
@@ -173,29 +170,7 @@ public class JcgmtosvgApplication {
 		return false;
 	}
 	
-	public void imgToSvg(String fileInput, String fileoutput) {
-		
-		DOMImplementation domImpl = SVGDOMImplementation.getDOMImplementation();
-		
-		// Create an instance of org.w3c.dom.Document.
-		String svgNS = "http://www.w3.org/2000/svg";
-		Document document = domImpl.createDocument(svgNS, "svg", null);
-		
-		SVGGraphics2D svgGenerator = new SVGGraphics2D(document);
-		
-		//svgGenerator.drawImage(img, x, y, observer)
-		
-	}
-	
 	private Element createrCss(Document document, CDATASection styleSheet, SVGGraphics2D svgGenerator) {
-		/*
-		Element gen = document.getElementById(SVGSyntax.ID_PREFIX_GENERIC_DEFS);
-		if(gen!=null)
-			System.out.println(gen.getNodeName());
-		else
-			System.out.println("not found");
-			*/
-		
 		// Add a stylesheet to the definition section.
 		SVGSVGElement root = (SVGSVGElement) svgGenerator.getRoot();
 		
@@ -210,7 +185,6 @@ public class JcgmtosvgApplication {
 		styleSheet.appendData("@keyframes blink {100%,0% {fill: transparent;}60% {fill: #f00;}}.hotspotBlink {animation: blink 0.25s 3;}");
 		//-----------JS
 		
-		//Element javascript = document.createElementNS(SVGSyntax.SVG_NAMESPACE_URI, SVGSyntax.SVG_SCRIPT_TAG);
 		Element javascript = document.createElement(SVGConstants.SVG_SCRIPT_TAG);
 		javascript.setAttribute("id", "nativeJSHS");
 		defs.appendChild(javascript);
@@ -229,8 +203,7 @@ public class JcgmtosvgApplication {
 		try {
 			cgm = new CGM4SVG(cgmFile, svgPainter);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.error("Error while loading the CGM file [" + file + "]: " + e.getMessage(), e);
 			return null;
 		}
 		return cgm;
@@ -238,7 +211,6 @@ public class JcgmtosvgApplication {
 	
 	public static void paint2(Graphics2D g2d, CGM4SVG cgm) {
 		final CGMDisplay display = new CGMDisplay4SVG(cgm);
-		//cgm.paint(cgmDisplay);
 		Dimension size = cgm.getSize();
 		int width = size.width;
 		int height = size.height;
@@ -250,9 +222,9 @@ public class JcgmtosvgApplication {
 		String filename = file.getCanonicalPath();
 		String filenameWithoutExtension;
 		if (filename.contains("."))
-			filenameWithoutExtension = filename.substring(filename.lastIndexOf(System.getProperty("file.separator")) + 1, filename.lastIndexOf('.'));
+			filenameWithoutExtension = filename.substring(filename.lastIndexOf(FileSystems.getDefault().getSeparator()) + 1, filename.lastIndexOf('.'));
 		else
-			filenameWithoutExtension = filename.substring(filename.lastIndexOf(System.getProperty("file.separator")) + 1);
+			filenameWithoutExtension = filename.substring(filename.lastIndexOf(FileSystems.getDefault().getSeparator()) + 1);
 		
 		return filenameWithoutExtension;
 	}

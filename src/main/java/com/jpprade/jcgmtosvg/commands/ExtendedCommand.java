@@ -14,6 +14,9 @@ import net.sf.jcgm.core.HatchIndex.HatchType;
 
 public class ExtendedCommand {
 	
+	private static final double STEP_X = 1.41;
+	private static final double STEP_Y = 1.41;
+	
 	public void drawHatch(Shape s, SVGGraphics2DHS g2d, Color fillColor, HatchType hatchType) {
 		// remember the clip and the stroke since we're overwriting them here
 		Shape previousClippingArea = g2d.getClip();
@@ -26,21 +29,19 @@ public class ExtendedCommand {
 		
 		g2d.setColor(fillColor);
 		
-		final double stepX = 1.41;
-		final double stepY = 1.41;
-		final double slopeStep = stepX * 1.41;
+		final double slopeStep = STEP_X * 1.41;
 		
 		if (HatchType.HORIZONTAL_LINES.equals(hatchType)) {
-			drawHorizontalLines(bounds, stepY, g2d);
+			drawHorizontalLines(bounds, STEP_Y, g2d);
 		} else if (HatchType.VERTICAL_LINES.equals(hatchType)) {
-			drawVerticalLines(bounds, stepX, g2d);
+			drawVerticalLines(bounds, STEP_X, g2d);
 		} else if (HatchType.POSITIVE_SLOPE_LINES.equals(hatchType)) {
 			drawPositiveSlopeLines(bounds, slopeStep, g2d);
 		} else if (HatchType.NEGATIVE_SLOPE_LINES.equals(hatchType)) {
 			drawNegativeSlopeLines(bounds, slopeStep, g2d);
 		} else if (HatchType.HORIZONTAL_VERTICAL_CROSSHATCH.equals(hatchType)) {
-			drawHorizontalLines(bounds, stepY, g2d);
-			drawVerticalLines(bounds, stepX, g2d);
+			drawHorizontalLines(bounds, STEP_Y, g2d);
+			drawVerticalLines(bounds, STEP_X, g2d);
 		} else if (HatchType.POSITIVE_NEGATIVE_CROSSHATCH.equals(hatchType)) {
 			drawPositiveSlopeLines(bounds, slopeStep, g2d);
 			drawNegativeSlopeLines(bounds, slopeStep, g2d);
